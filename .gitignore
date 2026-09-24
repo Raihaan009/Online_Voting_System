@@ -1,0 +1,30 @@
+# Maven build output
+target/
+*.war
+*.jar
+*.class
+
+# IDE and Project files
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.factorypath
+*.sublime-project
+*.sublime-workspace
+.vscode/
+
+# Logs and runtime artifacts
+*.log
+*.tmp
+*.bak
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables & local configuration
+.env
+local.properties
