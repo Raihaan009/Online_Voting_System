@@ -1,4 +1,4 @@
-package com.ovs.controllers;
+package com.ovs.controllers.admin;
 
 import com.ovs.dao.AdminDAO;
 import com.ovs.models.Admin;
@@ -14,9 +14,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Controller handling administrator authentication and secure session creation.
- * Validates administrative credentials against {@link AdminDAO}, applies session fixation
- * protection, and redirects to the administrative dashboard.
+ * Administrative Authentication Controller.
+ * Authenticates election administrators against the MySQL database with BCrypt password verification,
+ * guards against session fixation, and initializes the administrative session context.
  */
 @WebServlet("/admin/login")
 public class AdminLoginServlet extends HttpServlet {
@@ -59,16 +59,16 @@ public class AdminLoginServlet extends HttpServlet {
 
         Admin admin = adminDAO.login(email, password);
         if (admin != null) {
-            // Invalidate old session to mitigate session fixation attacks
+            // Mitigate session fixation by destroying prior session
             HttpSession oldSession = request.getSession(false);
             if (oldSession != null) {
                 oldSession.invalidate();
             }
 
-            // Create new administrative session
+            // Provision a fresh authenticated administrative session
             HttpSession newSession = request.getSession(true);
             newSession.setAttribute("currentAdmin", admin);
-            newSession.setMaxInactiveInterval(30 * 60); // 30 minutes timeout
+            newSession.setMaxInactiveInterval(30 * 60); // 30 minutes session timeout
 
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
         } else {

@@ -1,7 +1,7 @@
 package com.ovs.util;
 
 import com.ovs.config.DBConnection;
-import com.ovs.controllers.AdminServlet;
+import com.ovs.controllers.admin.AdminDashboardServlet;
 import com.ovs.controllers.LoginServlet;
 import com.ovs.controllers.LogoutServlet;
 import com.ovs.controllers.RegisterServlet;
@@ -260,7 +260,7 @@ public class Phase3TestRunner {
         WebServlet logAnn = LoginServlet.class.getAnnotation(WebServlet.class);
         WebServlet logoutAnn = LogoutServlet.class.getAnnotation(WebServlet.class);
         WebServlet voteAnn = VoteServlet.class.getAnnotation(WebServlet.class);
-        WebServlet adminAnn = AdminServlet.class.getAnnotation(WebServlet.class);
+        WebServlet adminAnn = AdminDashboardServlet.class.getAnnotation(WebServlet.class);
 
         boolean regOk = regAnn != null && Arrays.asList(regAnn.value()).contains("/register");
         boolean logOk = logAnn != null && Arrays.asList(logAnn.value()).contains("/login");
@@ -270,11 +270,11 @@ public class Phase3TestRunner {
 
         if (regOk && logOk && logoutOk && voteOk && adminOk) {
             System.out.println(GREEN + "  [PASSED] All 5 required Servlets verified with valid @WebServlet bindings:" + RESET);
-            System.out.println("    - RegisterServlet : " + Arrays.toString(regAnn.value()));
-            System.out.println("    - LoginServlet    : " + Arrays.toString(logAnn.value()));
-            System.out.println("    - LogoutServlet   : " + Arrays.toString(logoutAnn.value()));
-            System.out.println("    - VoteServlet     : " + Arrays.toString(voteAnn.value()));
-            System.out.println("    - AdminServlet    : " + Arrays.toString(adminAnn.value()));
+            System.out.println("    - RegisterServlet       : " + Arrays.toString(regAnn.value()));
+            System.out.println("    - LoginServlet          : " + Arrays.toString(logAnn.value()));
+            System.out.println("    - LogoutServlet         : " + Arrays.toString(logoutAnn.value()));
+            System.out.println("    - VoteServlet           : " + Arrays.toString(voteAnn.value()));
+            System.out.println("    - AdminDashboardServlet : " + Arrays.toString(adminAnn.value()));
             passedCount++;
         } else {
             System.err.println(RED + "  [FAILED] One or more servlets missing required @WebServlet mappings." + RESET);

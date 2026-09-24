@@ -142,6 +142,14 @@ document.addEventListener("DOMContentLoaded", function () {
     preventDoubleSubmit("loginForm", "loginSubmitBtn", "Authenticating...");
     preventDoubleSubmit("adminLoginForm", "adminLoginSubmitBtn", "Verifying Admin...");
     preventDoubleSubmit("registerForm", "registerSubmitBtn", "Creating Account...");
+
+    // -------------------------------------------------------------------------
+    // 6. Dynamic Progress Bar Widths (Electoral Results & Tabulation)
+    // -------------------------------------------------------------------------
+    document.querySelectorAll(".progress-bar-fill[data-progress]").forEach(function (bar) {
+        var progress = parseFloat(bar.getAttribute("data-progress")) || 0;
+        bar.style.width = Math.min(100, Math.max(0, progress)) + "%";
+    });
 });
 
 /**

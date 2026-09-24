@@ -1,8 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
-<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
-<%-- If accessed directly without going through AdminServlet, redirect to populate data --%>
+<%-- If accessed directly without going through AdminDashboardServlet, redirect to populate data --%>
 <c:if test="${empty allElections && empty electionResultsMap}">
     <c:redirect url="/admin/dashboard" />
 </c:if>
@@ -30,7 +29,7 @@
                     Administrator Dashboard: <span class="gradient-text">${currentAdmin.name}</span>
                 </h1>
                 <p class="admin-banner-sub">
-                    Logged in as: <strong>${currentAdmin.email}</strong> &bull; 
+                    Institutional Email: <strong>${currentAdmin.email}</strong> &bull; 
                     Role: <span class="badge badge-purple">${currentAdmin.role}</span>
                 </p>
             </div>
@@ -38,17 +37,24 @@
                 <span class="live-pulse-badge">
                     <span class="live-dot"></span> Live Tabulation Active
                 </span>
+                <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-outline-danger btn-sm" style="margin-left: 0.75rem;">
+                    Admin Logout
+                </a>
             </div>
         </section>
 
-        <!-- Calculate Aggregated Global Metrics -->
-        <c:set var="totalVotesAcrossElections" value="0" />
-        <c:forEach var="election" items="${allElections}">
-            <c:set var="results" value="${electionResultsMap[election.electionId]}" />
-            <c:forEach var="res" items="${results}">
-                <c:set var="totalVotesAcrossElections" value="${totalVotesAcrossElections + res.totalVotes}" />
-            </c:forEach>
-        </c:forEach>
+        <!-- Quick Governance Action Bar -->
+        <section class="admin-quick-actions-bar">
+            <a href="${pageContext.request.contextPath}/admin/elections" class="btn btn-primary">
+                📅 Manage Elections
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/candidates" class="btn btn-outline-primary">
+                👥 Candidate Directory
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/results" class="btn btn-purple">
+                📊 Live Tally & Auditing
+            </a>
+        </section>
 
         <!-- Metric Stat Cards Grid -->
         <section class="metrics-grid">
@@ -56,7 +62,7 @@
                 <div class="metric-icon-wrap icon-blue">🗳️</div>
                 <div class="metric-data">
                     <span class="metric-num">${not empty allElections ? allElections.size() : 0}</span>
-                    <span class="metric-title">Total Scheduled Elections</span>
+                    <span class="metric-title">Total Elections</span>
                 </div>
             </div>
 
@@ -71,7 +77,7 @@
             <div class="metric-card">
                 <div class="metric-icon-wrap icon-purple">📥</div>
                 <div class="metric-data">
-                    <span class="metric-num">${totalVotesAcrossElections}</span>
+                    <span class="metric-num">${totalBallotsCast}</span>
                     <span class="metric-title">Total Ballots Cast</span>
                 </div>
             </div>
@@ -85,117 +91,82 @@
             </div>
         </section>
 
-        <!-- Tabulated Results by Election -->
+        <!-- Active Elections Summaries & Governance Table -->
         <section class="admin-results-section">
-            <div class="section-heading-wrap">
+            <div class="section-heading-wrap" style="display: flex; justify-content: space-between; align-items: flex-end;">
                 <div>
-                    <h2 class="section-heading">Live Election Tabulations & Results</h2>
-                    <p class="section-subheading">Candidate vote totals are tallied in real time via SQL aggregation from the secret ballot box.</p>
+                    <h2 class="section-heading">Electoral Operations Overview</h2>
+                    <p class="section-subheading">Active and scheduled elections with real-time participation status.</p>
                 </div>
+                <a href="${pageContext.request.contextPath}/admin/elections" class="btn btn-sm btn-outline-secondary">
+                    + Schedule New Election
+                </a>
             </div>
 
             <c:choose>
                 <c:when test="${not empty allElections}">
-                    <c:forEach var="election" items="${allElections}">
-                        <c:set var="results" value="${electionResultsMap[election.electionId]}" />
+                    <div class="table-responsive" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+                        <table class="tally-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Election Title</th>
+                                    <th>Status</th>
+                                    <th>Polling Window</th>
+                                    <th>Votes Tabulated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="election" items="${allElections}">
+                                    <c:set var="results" value="${electionResultsMap[election.electionId]}" />
+                                    <c:set var="totalVotesForThis" value="0" />
+                                    <c:forEach var="r" items="${results}">
+                                        <c:set var="totalVotesForThis" value="${totalVotesForThis + r.totalVotes}" />
+                                    </c:forEach>
 
-                        <!-- Compute Election Total Votes -->
-                        <c:set var="electionTotalVotes" value="0" />
-                        <c:forEach var="res" items="${results}">
-                            <c:set var="electionTotalVotes" value="${electionTotalVotes + res.totalVotes}" />
-                        </c:forEach>
-
-                        <div class="election-tally-card">
-                            <div class="tally-card-header">
-                                <div>
-                                    <div class="tally-title-wrap">
-                                        <h3 class="tally-election-title">${election.title}</h3>
-                                        <span class="badge ${election.status == 'ACTIVE' ? 'badge-success' : 'badge-secondary'}">
-                                            ${election.status}
-                                        </span>
-                                    </div>
-                                    <p class="tally-election-desc">${election.description}</p>
-                                    <small class="text-muted">
-                                        Polling Window: ${election.startDate} &mdash; ${election.endDate}
-                                    </small>
-                                </div>
-                                <div class="tally-summary-pill">
-                                    <span class="pill-label">Total Ballots</span>
-                                    <span class="pill-number">${electionTotalVotes}</span>
-                                </div>
-                            </div>
-
-                            <!-- Tabular Results Display -->
-                            <div class="table-responsive">
-                                <table class="tally-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Rank</th>
-                                            <th>Candidate</th>
-                                            <th>Affiliation / Symbol</th>
-                                            <th>Votes Tabulated</th>
-                                            <th>Vote Share</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:choose>
-                                            <c:when test="${not empty results}">
-                                                <c:forEach var="res" items="${results}" varStatus="status">
-                                                    <c:set var="percentage" value="0" />
-                                                    <c:if test="${electionTotalVotes > 0}">
-                                                        <c:set var="percentage" value="${(res.totalVotes * 100.0) / electionTotalVotes}" />
-                                                    </c:if>
-
-                                                    <tr class="${status.first && res.totalVotes > 0 ? 'leader-row' : ''}">
-                                                        <td class="rank-col">
-                                                            <c:choose>
-                                                                <c:when test="${status.first && res.totalVotes > 0}">
-                                                                    <span class="trophy-badge">🏆 1st</span>
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    #${status.count}
-                                                                </c:otherwise>
-                                                            </c:choose>
-                                                        </td>
-                                                        <td class="candidate-col">
-                                                            <strong>${res.candidateName}</strong>
-                                                        </td>
-                                                        <td class="symbol-col">
-                                                            <span class="symbol-tag">${res.partySymbol}</span>
-                                                        </td>
-                                                        <td class="votes-col">
-                                                            <strong class="vote-count-number">${res.totalVotes}</strong> votes
-                                                        </td>
-                                                        <td class="share-col">
-                                                            <div class="progress-bar-wrap">
-                                                                <div class="progress-bar-fill" style="width: ${percentage}%;"></div>
-                                                            </div>
-                                                            <span class="percentage-label">
-                                                                <c:out value="${String.format('%.1f', percentage)}" />%
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                </c:forEach>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-muted">
-                                                        No candidate results registered for this election.
-                                                    </td>
-                                                </tr>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </c:forEach>
+                                    <tr>
+                                        <td><strong>#${election.electionId}</strong></td>
+                                        <td>
+                                            <strong>${election.title}</strong>
+                                            <div class="text-muted small">${election.description}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge ${election.status == 'ACTIVE' ? 'badge-success' : (election.status == 'CLOSED' ? 'badge-danger' : 'badge-secondary')}">
+                                                ${election.status}
+                                            </span>
+                                        </td>
+                                        <td class="small">
+                                            <div><strong>Start:</strong> ${election.startDate}</div>
+                                            <div><strong>End:</strong> ${election.endDate}</div>
+                                        </td>
+                                        <td>
+                                            <strong class="vote-count-number">${totalVotesForThis}</strong> ballots
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                                <a href="${pageContext.request.contextPath}/admin/results?electionId=${election.electionId}" class="btn btn-sm btn-outline-primary">
+                                                    Results
+                                                </a>
+                                                <a href="${pageContext.request.contextPath}/admin/candidates?electionId=${election.electionId}" class="btn btn-sm btn-outline-secondary">
+                                                    Candidates
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
                 </c:when>
                 <c:otherwise>
                     <div class="empty-state-card">
                         <div class="empty-icon">📊</div>
                         <h3>No Elections Recorded</h3>
                         <p>No election records found in the database. Schedule an election to begin tabulating votes.</p>
+                        <a href="${pageContext.request.contextPath}/admin/elections" class="btn btn-primary" style="margin-top: 1rem;">
+                            Schedule Election Now
+                        </a>
                     </div>
                 </c:otherwise>
             </c:choose>

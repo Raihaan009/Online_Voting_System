@@ -22,7 +22,16 @@
                 <p>Restricted access for certified Election Commission officials</p>
             </div>
 
-            <!-- Error Alerts -->
+            <!-- Alerts -->
+            <c:if test="${not empty param.info}">
+                <div class="alert alert-info" role="alert">
+                    <span class="alert-icon">ℹ️</span>
+                    <div class="alert-content">
+                        <c:out value="${param.info}" />
+                    </div>
+                </div>
+            </c:if>
+
             <c:if test="${not empty param.error}">
                 <div class="alert alert-danger" role="alert">
                     <span class="alert-icon">⚠️</span>

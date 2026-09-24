@@ -1,7 +1,8 @@
-package com.ovs.controllers;
+package com.ovs.controllers.admin;
 
 import com.ovs.dao.ElectionDAO;
 import com.ovs.dao.VoteDAO;
+import com.ovs.dao.VoterDAO;
 import com.ovs.models.Admin;
 import com.ovs.models.CandidateResult;
 import com.ovs.models.Election;
@@ -20,34 +21,29 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controller serving the administrative dashboard.
- * Verifies election administrator credentials, aggregates live election data
- * and tabulated candidate vote counts via {@link ElectionDAO} and {@link VoteDAO},
- * and forwards the model to the administrative view.
+ * Controller serving the primary administrative control center.
+ * Aggregates high-level electoral health metrics, active election windows,
+ * live ballot counts, and candidate standings.
  */
 @WebServlet("/admin/dashboard")
-public class AdminServlet extends HttpServlet {
+public class AdminDashboardServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private ElectionDAO electionDAO;
     private VoteDAO voteDAO;
+    private VoterDAO voterDAO;
 
     @Override
     public void init() throws ServletException {
         this.electionDAO = new ElectionDAO();
         this.voteDAO = new VoteDAO();
+        this.voterDAO = new VoterDAO();
     }
 
-    /**
-     * Handles GET requests to load the administrative overview.
-     * Verifies admin session, fetches active and recorded elections,
-     * tallies live candidate results, and forwards to /admin/dashboard.jsp.
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Verify administrator session
         HttpSession session = request.getSession(false);
         Admin admin = (session != null) ? (Admin) session.getAttribute("currentAdmin") : null;
 
@@ -57,30 +53,37 @@ public class AdminServlet extends HttpServlet {
             return;
         }
 
-        // 2. Fetch elections
-        List<Election> activeElections = electionDAO.getActiveElections();
+        // 1. Fetch elections data
         List<Election> allElections = electionDAO.getAllElections();
+        List<Election> activeElections = electionDAO.getActiveElections();
 
-        // 3. Aggregate live vote tallies for all elections
+        // 2. Fetch voter and ballot tallies
+        long totalBallotsCast = voteDAO.getTotalBallotsCastCount();
+        int totalRegisteredVoters = voterDAO.getAllVoters().size();
+
+        // 3. Tabulate live results and analytics maps per election
         Map<Long, List<CandidateResult>> electionResultsMap = new HashMap<>();
+        Map<Long, Map<String, Object>> electionAnalyticsMap = new HashMap<>();
+
         for (Election election : allElections) {
-            List<CandidateResult> results = voteDAO.getElectionResults(election.getElectionId());
-            electionResultsMap.put(election.getElectionId(), results);
+            long electionId = election.getElectionId();
+            electionResultsMap.put(electionId, voteDAO.getElectionResults(electionId));
+            electionAnalyticsMap.put(electionId, voteDAO.getElectionAnalytics(electionId));
         }
 
-        // 4. Attach model attributes to request scope
+        // 4. Attach attributes to request scope
         request.setAttribute("currentAdmin", admin);
-        request.setAttribute("activeElections", activeElections);
         request.setAttribute("allElections", allElections);
+        request.setAttribute("activeElections", activeElections);
+        request.setAttribute("totalBallotsCast", totalBallotsCast);
+        request.setAttribute("totalRegisteredVoters", totalRegisteredVoters);
         request.setAttribute("electionResultsMap", electionResultsMap);
+        request.setAttribute("electionAnalyticsMap", electionAnalyticsMap);
 
-        // 5. Forward to admin dashboard JSP view
+        // 5. Forward to admin dashboard view
         request.getRequestDispatcher("/admin/dashboard.jsp").forward(request, response);
     }
 
-    /**
-     * Handles POST requests by delegating to doGet.
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

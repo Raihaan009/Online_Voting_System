@@ -13,13 +13,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Data Access Object (DAO) for managing secret ballots, voting receipts, and voter participation status.
  * Executes atomic, ACID-compliant transactions ensuring secret ballot anonymity,
- * one-person-one-vote rules, and SHA-256 cryptographic receipt verification.
+ * one-person-one-vote rules, cryptographic SHA-256 verification, and live election analytics.
  */
 public class VoteDAO {
 
@@ -249,6 +251,178 @@ public class VoteDAO {
     }
 
     /**
+     * Computes comprehensive election metrics including total eligible voters,
+     * ballots cast, turnout percentage, and candidate result breakdown with vote shares.
+     *
+     * @param electionId unique identifier of the election
+     * @return analytics map containing metrics and detailed breakdown
+     */
+    public Map<String, Object> getElectionAnalytics(long electionId) {
+        Map<String, Object> analytics = new HashMap<>();
+
+        long totalEligibleVoters = 0;
+        long totalVotesCast = 0;
+
+        // 1. Get eligible approved voters count
+        String eligibleVotersSql = "SELECT COUNT(*) FROM voters WHERE status = 'APPROVED'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(eligibleVotersSql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                totalEligibleVoters = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching eligible voters count: " + e.getMessage());
+        }
+
+        // If no approved voters found, check total voters count
+        if (totalEligibleVoters == 0) {
+            String allVotersSql = "SELECT COUNT(*) FROM voters";
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(allVotersSql);
+                 ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    totalEligibleVoters = rs.getLong(1);
+                }
+            } catch (SQLException e) {
+                System.err.println("Error fetching all voters count: " + e.getMessage());
+            }
+        }
+
+        // 2. Get total votes cast in this election
+        String votesCastSql = "SELECT COUNT(*) FROM votes WHERE election_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(votesCastSql)) {
+            pstmt.setLong(1, electionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    totalVotesCast = rs.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching total votes cast for election " + electionId + ": " + e.getMessage());
+        }
+
+        // 3. Compute turnout percentage
+        double turnoutPercentage = 0.0;
+        if (totalEligibleVoters > 0) {
+            turnoutPercentage = (totalVotesCast * 100.0) / totalEligibleVoters;
+        }
+
+        // 4. Candidate Results Breakdown
+        List<CandidateResult> results = getElectionResults(electionId);
+        List<Map<String, Object>> candidateBreakdown = new ArrayList<>();
+        String leadingCandidateName = "None";
+        long maxVotes = -1;
+
+        for (CandidateResult cr : results) {
+            Map<String, Object> cMap = new HashMap<>();
+            cMap.put("candidateId", cr.getCandidateId());
+            cMap.put("candidateName", cr.getCandidateName());
+            cMap.put("partySymbol", cr.getPartySymbol());
+            cMap.put("totalVotes", cr.getTotalVotes());
+
+            double voteShare = 0.0;
+            if (totalVotesCast > 0) {
+                voteShare = (cr.getTotalVotes() * 100.0) / totalVotesCast;
+            }
+            cMap.put("voteShare", voteShare);
+
+            if (cr.getTotalVotes() > maxVotes && cr.getTotalVotes() > 0) {
+                maxVotes = cr.getTotalVotes();
+                leadingCandidateName = cr.getCandidateName();
+            }
+
+            candidateBreakdown.add(cMap);
+        }
+
+        analytics.put("electionId", electionId);
+        analytics.put("totalEligibleVoters", totalEligibleVoters);
+        analytics.put("totalVotesCast", totalVotesCast);
+        analytics.put("turnoutPercentage", turnoutPercentage);
+        analytics.put("candidateResults", results);
+        analytics.put("candidateBreakdown", candidateBreakdown);
+        analytics.put("leadingCandidate", leadingCandidateName);
+
+        return analytics;
+    }
+
+    /**
+     * Verifies whether a given cryptographic SHA-256 receipt token exists for an election,
+     * confirming that the ballot was legitimately accepted into the secret ballot box.
+     *
+     * @param electionId   unique identifier of the election
+     * @param receiptToken 64-character SHA-256 cryptographic receipt token
+     * @return true if valid and found in the votes table, false otherwise
+     */
+    public boolean verifyReceiptToken(long electionId, String receiptToken) {
+        if (receiptToken == null || receiptToken.trim().isEmpty()) {
+            return false;
+        }
+
+        String sql = "SELECT COUNT(*) FROM votes WHERE election_id = ? AND receipt_token = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setLong(1, electionId);
+            pstmt.setString(2, receiptToken.trim());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error verifying receipt token: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves cryptographic receipt audit details including election and candidate context.
+     *
+     * @param receiptToken 64-character SHA-256 ballot receipt token
+     * @return map with ballot audit metadata or null if not found
+     */
+    public Map<String, Object> getReceiptAuditDetails(String receiptToken) {
+        if (receiptToken == null || receiptToken.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT v.vote_id, v.election_id, v.candidate_id, v.vote_timestamp, v.receipt_token, " +
+                     "       e.title AS election_title, c.name AS candidate_name, c.party_symbol " +
+                     "FROM votes v " +
+                     "JOIN elections e ON v.election_id = e.election_id " +
+                     "JOIN candidates c ON v.candidate_id = c.candidate_id " +
+                     "WHERE v.receipt_token = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, receiptToken.trim());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Map<String, Object> audit = new HashMap<>();
+                    audit.put("voteId", rs.getLong("vote_id"));
+                    audit.put("electionId", rs.getLong("election_id"));
+                    audit.put("candidateId", rs.getLong("candidate_id"));
+                    audit.put("timestamp", rs.getTimestamp("vote_timestamp"));
+                    audit.put("receiptToken", rs.getString("receipt_token"));
+                    audit.put("electionTitle", rs.getString("election_title"));
+                    audit.put("candidateName", rs.getString("candidate_name"));
+                    audit.put("partySymbol", rs.getString("party_symbol"));
+                    return audit;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving receipt audit details: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
      * Checks if a voter has already cast a vote in a specific election.
      *
      * @param voterId    unique identifier of the voter
@@ -343,6 +517,25 @@ public class VoteDAO {
             System.err.println("Error fetching voter election status: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Returns the global count of all ballots cast across all elections.
+     *
+     * @return total ballot count
+     */
+    public long getTotalBallotsCastCount() {
+        String sql = "SELECT COUNT(*) FROM votes";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching total ballots cast count: " + e.getMessage());
+        }
+        return 0;
     }
 
     /**

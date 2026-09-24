@@ -1543,8 +1543,27 @@ a:hover {
     gap: 0.75rem;
 }
 
-.footer-links a { color: var(--text-muted); }
-.footer-links a:hover { color: var(--primary); }
+.admin-breadcrumb-bar {
+    margin-bottom: 0.5rem;
+}
+.admin-breadcrumb-bar a {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.admin-breadcrumb-bar a:hover {
+    color: var(--primary);
+}
+
+.admin-quick-actions-bar {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
 
 /* =========================================================================
    Responsive Design
