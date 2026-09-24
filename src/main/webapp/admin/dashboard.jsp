@@ -54,6 +54,9 @@
             <a href="${pageContext.request.contextPath}/admin/results" class="btn btn-purple">
                 📊 Live Tally & Auditing
             </a>
+            <a href="${pageContext.request.contextPath}/admin/audit" class="btn btn-outline-secondary">
+                🛡️ Security Audit Log
+            </a>
         </section>
 
         <!-- Metric Stat Cards Grid -->

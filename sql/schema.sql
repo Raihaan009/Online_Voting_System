@@ -142,3 +142,16 @@ VALUES
     'Committed to solar-powered campus transit, zero-single-use plastics, and transparent financing.',
     1
 ) ON DUPLICATE KEY UPDATE candidate_id=candidate_id;
+
+-- 7. Table: audit_logs (Administrative Governance & Operations Audit Trail)
+CREATE TABLE IF NOT EXISTS audit_logs (
+    log_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    admin_email VARCHAR(150) NOT NULL,
+    action_type VARCHAR(50) NOT NULL,
+    details TEXT,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (log_id),
+    KEY idx_audit_admin (admin_email),
+    KEY idx_audit_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

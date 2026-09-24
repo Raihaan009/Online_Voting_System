@@ -37,6 +37,7 @@
         <!-- Ballot Form -->
         <form id="voteForm" action="${pageContext.request.contextPath}/voter/cast-vote" method="POST" class="ballot-form">
             <input type="hidden" name="electionId" value="${election.electionId}">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
 
             <div class="candidates-heading">
                 <h2>Select One Candidate</h2>

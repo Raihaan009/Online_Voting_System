@@ -46,6 +46,9 @@
                         <a href="${pageContext.request.contextPath}/register.jsp" class="btn btn-outline-secondary btn-lg">
                             Register as Voter
                         </a>
+                        <a href="${pageContext.request.contextPath}/verify-receipt" class="btn btn-outline-secondary btn-lg">
+                            🔍 Verify Ballot Receipt
+                        </a>
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -99,9 +102,12 @@
                     <span>✓ ACID database transactions</span>
                     <span>✓ Zero voter identity leakage</span>
                 </div>
-                <div class="portal-tag">
+                <div class="portal-tag" style="margin-bottom: 0.75rem;">
                     End-to-End Auditable
                 </div>
+                <a href="${pageContext.request.contextPath}/verify-receipt" class="portal-link" style="color: #059669;">
+                    Verify Ballot Receipt &rarr;
+                </a>
             </div>
         </section>
 

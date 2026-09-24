@@ -56,6 +56,7 @@
             </h2>
             <form action="${pageContext.request.contextPath}/admin/elections" method="POST" class="auth-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
                 <input type="hidden" name="action" value="create">
+                <input type="hidden" name="csrfToken" value="${csrfToken}">
 
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label class="form-label" for="electionTitle">Election Title *</label>
@@ -135,6 +136,7 @@
                                     <form action="${pageContext.request.contextPath}/admin/elections" method="POST" style="display: flex; gap: 0.35rem; align-items: center;">
                                         <input type="hidden" name="action" value="updateStatus">
                                         <input type="hidden" name="electionId" value="${el.electionId}">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <select name="status" class="form-control" style="font-size: 0.8rem; padding: 0.3rem 0.6rem; width: auto;">
                                             <option value="ACTIVE" ${el.status == 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
                                             <option value="CLOSED" ${el.status == 'CLOSED' ? 'selected' : ''}>CLOSED</option>
@@ -155,6 +157,7 @@
                                         <form action="${pageContext.request.contextPath}/admin/elections" method="POST" onsubmit="return confirm('Are you sure you want to delete Election #${el.electionId}? All associated votes will be permanently removed.');">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="electionId" value="${el.electionId}">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                         </form>
                                     </div>

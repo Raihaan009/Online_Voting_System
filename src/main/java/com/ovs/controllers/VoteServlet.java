@@ -61,7 +61,14 @@ public class VoteServlet extends HttpServlet {
             return;
         }
 
-        // 2. Extract and parse parameters
+        // 2. Validate CSRF Protection Token
+        if (!com.ovs.util.CsrfUtil.isValidToken(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Security Validation Failed: Invalid or missing CSRF token. Potential cross-site request forgery detected.");
+            return;
+        }
+
+        // 3. Extract and parse parameters
         String electionIdParam = request.getParameter("electionId");
         String candidateIdParam = request.getParameter("candidateId");
 

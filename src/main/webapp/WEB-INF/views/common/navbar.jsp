@@ -16,6 +16,7 @@
         <!-- Navigation Links & User Authentication Status -->
         <nav class="nav-links">
             <a href="${pageContext.request.contextPath}/" class="nav-link">Home</a>
+            <a href="${pageContext.request.contextPath}/verify-receipt" class="nav-link">Verify Ballot Receipt</a>
 
             <c:choose>
                 <%-- Voter Authenticated Session --%>

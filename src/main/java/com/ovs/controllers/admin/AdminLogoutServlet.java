@@ -19,6 +19,12 @@ import java.nio.charset.StandardCharsets;
 public class AdminLogoutServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+    private com.ovs.dao.AuditDAO auditDAO;
+
+    @Override
+    public void init() throws ServletException {
+        this.auditDAO = new com.ovs.dao.AuditDAO();
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -26,6 +32,12 @@ public class AdminLogoutServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
         if (session != null) {
+            com.ovs.models.Admin admin = (com.ovs.models.Admin) session.getAttribute("currentAdmin");
+            if (admin != null) {
+                auditDAO.logAction(admin.getEmail(), "ADMIN_LOGOUT", 
+                        "Administrator logged out securely.", 
+                        request.getRemoteAddr());
+            }
             session.removeAttribute("currentAdmin");
             session.invalidate();
         }

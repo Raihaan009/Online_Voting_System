@@ -89,6 +89,7 @@
                           style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="electionId" value="${selectedElection.electionId}">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
 
                         <div class="form-group">
                             <label class="form-label" for="candidateName">Candidate Full Name *</label>
@@ -134,6 +135,7 @@
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="candidateId" value="${cand.candidateId}">
                                                 <input type="hidden" name="electionId" value="${selectedElection.electionId}">
+                                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
                                             </form>
                                         </div>

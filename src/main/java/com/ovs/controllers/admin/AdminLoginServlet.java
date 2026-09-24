@@ -23,10 +23,12 @@ public class AdminLoginServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private AdminDAO adminDAO;
+    private com.ovs.dao.AuditDAO auditDAO;
 
     @Override
     public void init() throws ServletException {
         this.adminDAO = new AdminDAO();
+        this.auditDAO = new com.ovs.dao.AuditDAO();
     }
 
     @Override
@@ -70,8 +72,16 @@ public class AdminLoginServlet extends HttpServlet {
             newSession.setAttribute("currentAdmin", admin);
             newSession.setMaxInactiveInterval(30 * 60); // 30 minutes session timeout
 
+            auditDAO.logAction(admin.getEmail(), "ADMIN_LOGIN", 
+                    "Successful administrator authentication. Role: " + admin.getRole(), 
+                    request.getRemoteAddr());
+
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
         } else {
+            auditDAO.logAction(email, "ADMIN_LOGIN_FAILED", 
+                    "Failed administrative authentication attempt.", 
+                    request.getRemoteAddr());
+
             String errMsg = URLEncoder.encode("Invalid administrator credentials. Access denied.", StandardCharsets.UTF_8);
             response.sendRedirect(request.getContextPath() + "/admin/login.jsp?error=" + errMsg);
         }
