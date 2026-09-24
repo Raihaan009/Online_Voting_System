@@ -88,6 +88,7 @@
                 <version>${maven.war.plugin.version}</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <outputDirectory>C:/Users/admin/Downloads/apache-tomcat-10.1.60-windows-x64/apache-tomcat-10.1.60/webapps</outputDirectory>
                 </configuration>
             </plugin>
         </plugins>
