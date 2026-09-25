@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Administrative Governance Controller for reviewing the immutable security audit log.
- * Exposes timestamps, administrator identities, operational actions, and client IPs.
+ * Exposes categorized views: Administrative Operations and Voter Authentication History.
  */
 @WebServlet("/admin/audit")
 public class AdminAuditServlet extends HttpServlet {
@@ -41,9 +41,19 @@ public class AdminAuditServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
         }
 
+        // Fetch segmented logs for tabbed views
+        List<AuditLog> adminLogs = auditDAO.getAdminLogs(limit);
+        List<AuditLog> voterLogs = auditDAO.getVoterLoginLogs(limit);
         List<AuditLog> auditLogs = auditDAO.getRecentLogs(limit);
+
+        long totalAdminLogs = auditDAO.getAdminLogCount();
+        long totalVoterLogs = auditDAO.getVoterLogCount();
         long totalLogCount = auditDAO.getTotalLogCount();
 
+        request.setAttribute("adminLogs", adminLogs);
+        request.setAttribute("voterLogs", voterLogs);
+        request.setAttribute("totalAdminLogs", totalAdminLogs);
+        request.setAttribute("totalVoterLogs", totalVoterLogs);
         request.setAttribute("auditLogs", auditLogs);
         request.setAttribute("totalLogCount", totalLogCount);
         request.setAttribute("currentLimit", limit);

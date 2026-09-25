@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voter Registration - Online Voting System</title>
+    <title>Voter Registration - CampusVote | Online Voting System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="auth-page">
@@ -17,6 +17,10 @@
         <div class="auth-card register-card">
             <!-- Header Icon & Title -->
             <div class="auth-header">
+                <div class="brand-hierarchy-badge">
+                    <span class="brand-title-mini">CampusVote</span>
+                    <span class="brand-secondary-text">ONLINE VOTING SYSTEM</span>
+                </div>
                 <div class="auth-icon-badge register-badge">📝</div>
                 <h2>Voter Registration</h2>
                 <p>Register as an eligible voter for institutional student council elections</p>

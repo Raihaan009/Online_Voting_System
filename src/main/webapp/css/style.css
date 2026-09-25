@@ -7,6 +7,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+    /* Requested Theme Properties */
+    --bg-body: #F4F6F8;
+    --surface-card: #FFFFFF;
+    --border-color: #DDE2E5;
+    --text-primary: #19212A;
+    --text-muted: #5E6D7E;
+    --input-bg: #FFFFFF;
+
     /* Color Palette */
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
@@ -35,18 +43,16 @@
     --danger-bg: #fef2f2;
     --danger-border: #fecaca;
     
-    /* Backgrounds & Text */
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
+    /* Semantic Aliases & Component Bindings */
+    --bg-main: var(--bg-body);
+    --bg-card: var(--surface-card);
     --bg-dark: #0f172a;
     --bg-dark-card: #1e293b;
     
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
+    --text-secondary: var(--text-muted);
     --text-light: #f8fafc;
     
-    --border: #e2e8f0;
+    --border: var(--border-color);
     --border-hover: #cbd5e1;
     --border-focus: #3b82f6;
     
@@ -66,6 +72,65 @@
     --font-mono: 'JetBrains Mono', Consolas, monospace;
 }
 
+/* =========================================================================
+   Global Dark Theme Variables (Activated via [data-theme="dark"])
+   ========================================================================= */
+[data-theme="dark"] {
+    /* Requested Theme Properties */
+    --bg-body: #0F172A;
+    --surface-card: #1E293B;
+    --border-color: #334155;
+    --text-primary: #F8FAFC;
+    --text-muted: #94A3B8;
+    --input-bg: #0F172A;
+
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --primary-light: rgba(59, 130, 246, 0.15);
+    --primary-border: rgba(59, 130, 246, 0.35);
+    
+    --secondary: #94a3b8;
+    --secondary-hover: #cbd5e1;
+    --secondary-light: #1e293b;
+    
+    --accent: #38bdf8;
+    --purple: #a855f7;
+    --purple-hover: #c084fc;
+    --purple-light: rgba(168, 85, 247, 0.18);
+    
+    --success: #10b981;
+    --success-hover: #34d399;
+    --success-bg: rgba(16, 185, 129, 0.15);
+    --success-border: rgba(16, 185, 129, 0.35);
+    
+    --warning: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.15);
+    --warning-border: rgba(245, 158, 11, 0.35);
+    
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.15);
+    --danger-border: rgba(239, 68, 68, 0.35);
+    
+    /* Semantic Aliases & Component Bindings */
+    --bg-main: var(--bg-body);
+    --bg-card: var(--surface-card);
+    --bg-dark: #070d18;
+    --bg-dark-card: #1e293b;
+    
+    --text-secondary: var(--text-muted);
+    --text-light: #f8fafc;
+    
+    --border: var(--border-color);
+    --border-hover: #475569;
+    --border-focus: #38bdf8;
+    
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5), 0 2px 6px -1px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 12px 24px -4px rgb(0 0 0 / 0.6), 0 4px 12px -2px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 30px -6px rgb(0 0 0 / 0.7);
+}
+
 /* Base Styles */
 * {
     box-sizing: border-box;
@@ -75,13 +140,14 @@
 
 body {
     font-family: var(--font-sans);
-    background-color: var(--bg-main);
+    background-color: var(--bg-body);
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 a {
@@ -1585,4 +1651,315 @@ a:hover {
     .ballot-action-bar .btn { width: 100%; }
     .token-container { flex-direction: column; }
     .confirmation-card { padding: 2rem 1.25rem; }
+    .brand-secondary-text { font-size: 0.675rem; letter-spacing: 0.5px; }
+    .symbol-picker-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+    .audit-tabs-nav { flex-direction: column; border-bottom: none; }
+    .audit-tab-btn { width: 100%; border-radius: var(--radius-sm); border-bottom: none; }
+    .audit-tab-btn.active { border-left: 4px solid var(--primary); }
+}
+
+/* =========================================================================
+   Brand Hierarchy Refinement Styles
+   ========================================================================= */
+.brand-secondary-text {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.8;
+    color: var(--text-muted);
+    display: block;
+    line-height: 1.2;
+}
+
+.brand-hierarchy-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    text-align: center;
+}
+
+.brand-title-mini {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.footer-brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+/* =========================================================================
+   Theme Toggle Switch / Button
+   ========================================================================= */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 9999px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 0.5rem;
+    user-select: none;
+    outline: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.theme-toggle-btn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.94);
+}
+
+.theme-toggle-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* =========================================================================
+   Candidate Preset Symbol Picker Grid
+   ========================================================================= */
+.symbol-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.symbol-tile {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    user-select: none;
+}
+
+.symbol-tile:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    background: var(--primary-light);
+}
+
+.symbol-tile.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.symbol-icon {
+    font-size: 1.85rem;
+    line-height: 1;
+}
+
+.symbol-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.symbol-tile.active .symbol-label {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* =========================================================================
+   Audit Tabs Navigation
+   ========================================================================= */
+.audit-tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+}
+
+.audit-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    transition: all 0.15s ease;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+}
+
+.audit-tab-btn:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.audit-tab-btn.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    border-bottom: 3px solid var(--primary);
+}
+
+.tab-badge {
+    background: var(--secondary-light);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+}
+
+.audit-tab-btn.active .tab-badge {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* =========================================================================
+   Candidate Voter Breakdown Button & Modal Overrides
+   ========================================================================= */
+.view-voters-btn {
+    padding: 0.25rem 0.65rem;
+    font-size: 0.775rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Dark Mode Specific Component Overrides */
+[data-theme="dark"] .navbar {
+    background-color: #111a2c;
+    border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .site-footer {
+    background-color: #080d19;
+    border-top-color: var(--border);
+}
+
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .portal-card,
+[data-theme="dark"] .election-card,
+[data-theme="dark"] .metric-card,
+[data-theme="dark"] .election-tally-card,
+[data-theme="dark"] .arch-container,
+[data-theme="dark"] .candidate-choice-card,
+[data-theme="dark"] .confirmation-card,
+[data-theme="dark"] .modal-card {
+    background-color: var(--bg-card);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #0b1120;
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: #0f172a;
+    border-color: var(--border-focus);
+}
+
+[data-theme="dark"] .tally-table thead th {
+    background-color: #111a2c;
+    color: var(--text-secondary);
+    border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .tally-table tbody tr {
+    border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .tally-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .candidate-choice-card.selected {
+    background-color: rgba(37, 99, 235, 0.12);
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .voter-pill {
+    background: rgba(5, 150, 105, 0.18);
+    border-color: rgba(5, 150, 105, 0.4);
+    color: #34d399;
+}
+
+[data-theme="dark"] .admin-pill {
+    background: rgba(124, 58, 237, 0.18);
+    border-color: rgba(124, 58, 237, 0.4);
+    color: #c084fc;
+}
+
+[data-theme="dark"] .badge-secondary {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .badge-success {
+    background: rgba(16, 185, 129, 0.18);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="dark"] .badge-purple {
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+    border-color: rgba(168, 85, 247, 0.35);
+}
+
+[data-theme="dark"] .badge-danger {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+[data-theme="dark"] .candidate-manifesto {
+    background: var(--bg-body) !important;
+}
+
+[data-theme="dark"] .selected-candidate-preview {
+    background: var(--bg-body) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+    background: var(--surface-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }

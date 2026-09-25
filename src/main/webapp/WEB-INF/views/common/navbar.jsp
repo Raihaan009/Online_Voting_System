@@ -1,15 +1,25 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
+<script>
+    /* Immediate theme application to prevent FOUC / theme flash */
+    (function () {
+        try {
+            var savedTheme = localStorage.getItem('campusvote_theme') || localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        } catch (e) {}
+    })();
+</script>
+
 <!-- Global Navigation Bar -->
 <header class="navbar">
     <div class="nav-container">
-        <!-- Brand Logo & Title -->
+        <!-- Brand Logo & Title (Brand Hierarchy Refinement) -->
         <a href="${pageContext.request.contextPath}/" class="logo-brand">
             <div class="logo-badge">V</div>
             <div class="logo-text">
-                <span class="logo-title">Online Voting System</span>
-                <span class="logo-sub">Institutional Governance</span>
+                <span class="logo-title">CampusVote</span>
+                <span class="logo-sub brand-secondary-text">ONLINE VOTING SYSTEM</span>
             </div>
         </a>
 
@@ -48,6 +58,23 @@
                     <a href="${pageContext.request.contextPath}/admin/login.jsp" class="nav-link admin-nav-link" title="Administrator Portal">Admin</a>
                 </c:otherwise>
             </c:choose>
+
+            <!-- Global Light / Dark Mode Toggle Button -->
+            <button id="themeToggleBtn" type="button" class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle theme">
+                <span id="themeIcon">🌙</span>
+            </button>
+            <script>
+                (function() {
+                    try {
+                        var current = localStorage.getItem('campusvote_theme') || localStorage.getItem('theme') || 'light';
+                        var icon = document.getElementById('themeIcon');
+                        if (icon) {
+                            icon.textContent = current === 'dark' ? '☀️' : '🌙';
+                        }
+                    } catch(e) {}
+                })();
+            </script>
         </nav>
     </div>
 </header>
+

@@ -1,5 +1,6 @@
 package com.ovs.controllers;
 
+import com.ovs.dao.AuditDAO;
 import com.ovs.dao.VoterDAO;
 import com.ovs.models.Voter;
 import jakarta.servlet.ServletException;
@@ -16,17 +17,20 @@ import java.nio.charset.StandardCharsets;
 /**
  * Controller managing voter authentication and session provisioning.
  * Validates credentials using {@link VoterDAO#login(String, String)},
- * guards against session fixation, and redirects authorized voters to the dashboard.
+ * guards against session fixation, audits voter authentication activity,
+ * and redirects authorized voters to the dashboard.
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private VoterDAO voterDAO;
+    private AuditDAO auditDAO;
 
     @Override
     public void init() throws ServletException {
         this.voterDAO = new VoterDAO();
+        this.auditDAO = new AuditDAO();
     }
 
     /**
@@ -47,7 +51,7 @@ public class LoginServlet extends HttpServlet {
     /**
      * Handles POST submission of voter login credentials.
      * Authenticates via BCrypt password verification, establishes a secure session,
-     * and routes to the dashboard.
+     * logs authentication audit trail, and routes to the dashboard.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -57,9 +61,16 @@ public class LoginServlet extends HttpServlet {
 
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String clientIp = request.getRemoteAddr();
 
         // 1. Validate parameter presence
         if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            auditDAO.logAction(
+                    (email != null && !email.trim().isEmpty()) ? email.trim().toLowerCase() : "anonymous",
+                    "VOTER_LOGIN_FAILED",
+                    "Rejected authentication attempt: Missing credentials",
+                    clientIp);
+
             String errMsg = URLEncoder.encode("Email and password cannot be empty.", StandardCharsets.UTF_8);
             response.sendRedirect(request.getContextPath() + "/login.jsp?error=" + errMsg);
             return;
@@ -73,6 +84,10 @@ public class LoginServlet extends HttpServlet {
         if (voter != null) {
             // Verify account status
             if ("SUSPENDED".equalsIgnoreCase(voter.getStatus()) || "REJECTED".equalsIgnoreCase(voter.getStatus())) {
+                auditDAO.logAction(voter.getEmail(), "VOTER_LOGIN_FAILED",
+                        "Authentication blocked: Account status is " + voter.getStatus(),
+                        clientIp);
+
                 String errMsg = URLEncoder.encode("Your voter registration is currently suspended or rejected. Please contact an election official.", StandardCharsets.UTF_8);
                 response.sendRedirect(request.getContextPath() + "/login.jsp?error=" + errMsg);
                 return;
@@ -89,8 +104,18 @@ public class LoginServlet extends HttpServlet {
             newSession.setAttribute("currentUser", voter);
             newSession.setMaxInactiveInterval(30 * 60); // 30 minutes inactivity timeout
 
+            // Record successful voter login audit log
+            auditDAO.logAction(voter.getEmail(), "VOTER_LOGIN",
+                    "Successful voter authentication. Status: " + voter.getStatus() + ", Name: " + voter.getName(),
+                    clientIp);
+
             response.sendRedirect(request.getContextPath() + "/voter/dashboard");
         } else {
+            // Record failed voter login audit log
+            auditDAO.logAction(email, "VOTER_LOGIN_FAILED",
+                    "Failed voter authentication: Invalid credentials",
+                    clientIp);
+
             String errMsg = URLEncoder.encode("Invalid email or password. Please verify your credentials.", StandardCharsets.UTF_8);
             response.sendRedirect(request.getContextPath() + "/login.jsp?error=" + errMsg);
         }

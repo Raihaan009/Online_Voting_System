@@ -5,8 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Online Voting System - Enterprise 3-Tier MVC Architecture powered by Java 17, Jakarta EE 10, and MySQL">
-    <title>Online Voting System - Democratic Campus Elections</title>
+    <meta name="description" content="CampusVote - Enterprise 3-Tier MVC Architecture powered by Java 17, Jakarta EE 10, and MySQL">
+    <title>CampusVote | Online Voting System - Democratic Campus Elections</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
 
         <!-- Hero Section -->
         <section class="hero-banner">
-            <div class="hero-badge">Institutional Electronic Voting</div>
+            <div class="hero-badge">CampusVote &bull; Online Voting System</div>
             <h1 class="hero-headline">
                 Secure, Transparent & <span class="gradient-text">Verifiable Elections</span>
             </h1>

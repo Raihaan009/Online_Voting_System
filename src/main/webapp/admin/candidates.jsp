@@ -11,7 +11,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Registry - Online Voting System</title>
+    <title>Candidate Registry - CampusVote | Online Voting System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="admin-page">
@@ -30,7 +30,7 @@
             <div class="admin-banner-text">
                 <div class="banner-pill admin-pill">Candidate Provisioning</div>
                 <h1 class="admin-banner-title">Candidate Directory & Nominations</h1>
-                <p class="admin-banner-sub">Attach competing candidates, party symbols, and policy manifestos to elections.</p>
+                <p class="admin-banner-sub">Attach competing candidates, official symbols, and policy manifestos to elections.</p>
             </div>
         </section>
 
@@ -79,7 +79,7 @@
 
         <c:choose>
             <c:when test="${not empty selectedElection}">
-                <!-- Add Candidate Form -->
+                <!-- Add Candidate Form with Preset Symbol Picker -->
                 <section class="arch-container" style="margin-bottom: 2.5rem;">
                     <h2 class="section-title">
                         <span>➕</span> Nominate New Candidate for "${selectedElection.title}"
@@ -91,16 +91,78 @@
                         <input type="hidden" name="electionId" value="${selectedElection.electionId}">
                         <input type="hidden" name="csrfToken" value="${csrfToken}">
 
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: 1 / -1;">
                             <label class="form-label" for="candidateName">Candidate Full Name *</label>
                             <input type="text" id="candidateName" name="name" class="form-control" 
                                    placeholder="e.g. Samantha Reed" required>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="partySymbol">Party Affiliation & Symbol *</label>
-                            <input type="text" id="partySymbol" name="partySymbol" class="form-control" 
-                                   placeholder="e.g. Progressive Tech Alliance (💻)" required>
+                        <!-- Candidate Preset Symbol Picker (Grid & Dropdown Selection) -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label" for="partySymbol">Candidate Official Symbol *</label>
+                            <p class="form-hint" style="margin-bottom: 0.65rem;">
+                                Select one recognized election symbol identifier to appear on democratic ballots:
+                            </p>
+
+                            <!-- Interactive Preset Symbol Grid -->
+                            <div class="symbol-picker-grid" id="symbolPickerGrid">
+                                <div class="symbol-tile active" data-symbol="🎓 Graduation Cap" onclick="selectCandidateSymbol('🎓 Graduation Cap', this)">
+                                    <span class="symbol-icon">🎓</span>
+                                    <span class="symbol-label">Graduation Cap</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="⚡ Lightning" onclick="selectCandidateSymbol('⚡ Lightning', this)">
+                                    <span class="symbol-icon">⚡</span>
+                                    <span class="symbol-label">Lightning</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="🦅 Eagle" onclick="selectCandidateSymbol('🦅 Eagle', this)">
+                                    <span class="symbol-icon">🦅</span>
+                                    <span class="symbol-label">Eagle</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="📚 Book" onclick="selectCandidateSymbol('📚 Book', this)">
+                                    <span class="symbol-icon">📚</span>
+                                    <span class="symbol-label">Book</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="🌟 Star" onclick="selectCandidateSymbol('🌟 Star', this)">
+                                    <span class="symbol-icon">🌟</span>
+                                    <span class="symbol-label">Star</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="🏆 Trophy" onclick="selectCandidateSymbol('🏆 Trophy', this)">
+                                    <span class="symbol-icon">🏆</span>
+                                    <span class="symbol-label">Trophy</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="⚖️ Scales of Justice" onclick="selectCandidateSymbol('⚖️ Scales of Justice', this)">
+                                    <span class="symbol-icon">⚖️</span>
+                                    <span class="symbol-label">Scales of Justice</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="🚀 Rocket" onclick="selectCandidateSymbol('🚀 Rocket', this)">
+                                    <span class="symbol-icon">🚀</span>
+                                    <span class="symbol-label">Rocket</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="💡 Bulb" onclick="selectCandidateSymbol('💡 Bulb', this)">
+                                    <span class="symbol-icon">💡</span>
+                                    <span class="symbol-label">Bulb</span>
+                                </div>
+                                <div class="symbol-tile" data-symbol="🌿 Leaf" onclick="selectCandidateSymbol('🌿 Leaf', this)">
+                                    <span class="symbol-icon">🌿</span>
+                                    <span class="symbol-label">Leaf</span>
+                                </div>
+                            </div>
+
+                            <!-- Synchronized Dropdown Selector -->
+                            <div style="margin-top: 0.85rem; max-width: 350px;">
+                                <select id="partySymbol" name="partySymbol" class="form-control" onchange="syncSymbolFromDropdown(this.value)" required>
+                                    <option value="🎓 Graduation Cap" selected>🎓 Graduation Cap</option>
+                                    <option value="⚡ Lightning">⚡ Lightning</option>
+                                    <option value="🦅 Eagle">🦅 Eagle</option>
+                                    <option value="📚 Book">📚 Book</option>
+                                    <option value="🌟 Star">🌟 Star</option>
+                                    <option value="🏆 Trophy">🏆 Trophy</option>
+                                    <option value="⚖️ Scales of Justice">⚖️ Scales of Justice</option>
+                                    <option value="🚀 Rocket">🚀 Rocket</option>
+                                    <option value="💡 Bulb">💡 Bulb</option>
+                                    <option value="🌿 Leaf">🌿 Leaf</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="form-group" style="grid-column: 1 / -1;">
@@ -177,6 +239,31 @@
         </c:choose>
 
     </main>
+
+    <script>
+        function selectCandidateSymbol(symbolValue, element) {
+            document.querySelectorAll('#symbolPickerGrid .symbol-tile').forEach(function(t) {
+                t.classList.remove('active');
+            });
+            if (element) {
+                element.classList.add('active');
+            }
+            var select = document.getElementById('partySymbol');
+            if (select) {
+                select.value = symbolValue;
+            }
+        }
+
+        function syncSymbolFromDropdown(symbolValue) {
+            document.querySelectorAll('#symbolPickerGrid .symbol-tile').forEach(function(t) {
+                if (t.getAttribute('data-symbol') === symbolValue) {
+                    t.classList.add('active');
+                } else {
+                    t.classList.remove('active');
+                }
+            });
+        }
+    </script>
 
     <!-- Include Footer -->
     <jsp:include page="/WEB-INF/views/common/footer.jsp" />

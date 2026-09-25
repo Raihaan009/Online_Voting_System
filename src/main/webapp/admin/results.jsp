@@ -11,7 +11,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tabulation & Audit - Online Voting System</title>
+    <title>Live Tabulation & Audit - CampusVote | Online Voting System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="admin-page">
@@ -158,7 +158,18 @@
                                                         <span class="symbol-tag">${cand.partySymbol}</span>
                                                     </td>
                                                     <td class="votes-col">
-                                                        <strong class="vote-count-number">${cand.totalVotes}</strong> votes
+                                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                                                            <span><strong class="vote-count-number">${cand.totalVotes}</strong> votes</span>
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-primary view-voters-btn"
+                                                                    data-candidate-id="${cand.candidateId}"
+                                                                    data-election-id="${selectedElectionId}"
+                                                                    data-candidate-name="<c:out value="${cand.candidateName}"/>"
+                                                                    data-candidate-symbol="<c:out value="${cand.partySymbol}"/>"
+                                                                    data-total-votes="${cand.totalVotes}">
+                                                                👥 View Voters
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                     <td class="share-col">
                                                         <div class="progress-bar-wrap">
@@ -251,7 +262,141 @@
             </c:otherwise>
         </c:choose>
 
+        <!-- Candidate Voter Breakdown Audit Modal (On-Demand Admin Audit) -->
+        <div id="candidateVotersModal" class="modal-overlay" style="display: none;">
+            <div class="modal-card" style="max-width: 680px; width: 95%;">
+                <div class="modal-header" style="text-align: left; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <div class="badge badge-purple" style="margin-bottom: 0.35rem;">On-Demand Admin Audit</div>
+                        <h3 class="modal-title" id="modalVotersCandidateTitle" style="font-size: 1.3rem;">Candidate Voters Breakdown</h3>
+                        <p class="modal-warning" id="modalVotersCandidateSubtitle" style="margin-bottom: 0; font-size: 0.85rem;">
+                            Electoral audit of voters who voted for this nominee.
+                        </p>
+                    </div>
+                    <button type="button" id="closeVotersModalBtnX" class="btn-outline-secondary" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer; line-height: 1; color: var(--text-secondary);" aria-label="Close">&times;</button>
+                </div>
+
+                <div class="modal-body" style="max-height: 380px; overflow-y: auto;">
+                    <div id="votersLoadingIndicator" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">⏳</div>
+                        <p style="font-size: 0.95rem;">Retrieving candidate voter breakdown from audit trail...</p>
+                    </div>
+
+                    <div id="votersTableWrap" style="display: none;">
+                        <table class="tally-table" style="font-size: 0.875rem;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>Voter Full Name</th>
+                                    <th>Institutional Email</th>
+                                    <th style="width: 100px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="votersTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="votersEmptyMessage" class="alert alert-info" style="display: none; margin: 1rem 0;">
+                        <span class="alert-icon">ℹ️</span>
+                        <div class="alert-content">No ballots have been recorded for this candidate in this election yet.</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 1.25rem;">
+                    <button type="button" id="closeVotersModalBtn" class="btn btn-outline-secondary">
+                        Close Audit Window
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </main>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var modal = document.getElementById("candidateVotersModal");
+        var closeBtnX = document.getElementById("closeVotersModalBtnX");
+        var closeBtn = document.getElementById("closeVotersModalBtn");
+        var titleEl = document.getElementById("modalVotersCandidateTitle");
+        var subTitleEl = document.getElementById("modalVotersCandidateSubtitle");
+        var loadingEl = document.getElementById("votersLoadingIndicator");
+        var tableWrap = document.getElementById("votersTableWrap");
+        var tbody = document.getElementById("votersTableBody");
+        var emptyEl = document.getElementById("votersEmptyMessage");
+
+        function closeModal() {
+            if (modal) modal.style.display = "none";
+        }
+
+        if (closeBtnX) closeBtnX.addEventListener("click", closeModal);
+        if (closeBtn) closeBtn.addEventListener("click", closeModal);
+        if (modal) {
+            modal.addEventListener("click", function (e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        document.querySelectorAll(".view-voters-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var candidateId = this.getAttribute("data-candidate-id");
+                var electionId = this.getAttribute("data-election-id");
+                var candidateName = this.getAttribute("data-candidate-name") || "Candidate";
+                var candidateSymbol = this.getAttribute("data-candidate-symbol") || "";
+                var totalVotes = this.getAttribute("data-total-votes") || "0";
+
+                if (titleEl) {
+                    titleEl.textContent = candidateName + (candidateSymbol ? " (" + candidateSymbol + ")" : "");
+                }
+                if (subTitleEl) {
+                    subTitleEl.textContent = "Total Audited Ballots: " + totalVotes + " votes recorded in secret ballot box.";
+                }
+
+                if (loadingEl) loadingEl.style.display = "block";
+                if (tableWrap) tableWrap.style.display = "none";
+                if (emptyEl) emptyEl.style.display = "none";
+                if (tbody) tbody.innerHTML = "";
+                if (modal) modal.style.display = "flex";
+
+                var url = "${pageContext.request.contextPath}/admin/results?action=getVoters&electionId=" + 
+                          encodeURIComponent(electionId) + "&candidateId=" + encodeURIComponent(candidateId);
+
+                fetch(url)
+                    .then(function (res) { return res.json(); })
+                    .then(function (voters) {
+                        if (loadingEl) loadingEl.style.display = "none";
+                        if (!voters || voters.length === 0) {
+                            if (emptyEl) emptyEl.style.display = "flex";
+                        } else {
+                            var html = "";
+                            voters.forEach(function (v, idx) {
+                                html += "<tr>" +
+                                        "<td>#" + (idx + 1) + "</td>" +
+                                        "<td><strong>" + escapeHtml(v.name) + "</strong></td>" +
+                                        "<td><code>" + escapeHtml(v.email) + "</code></td>" +
+                                        "<td><span class='badge badge-success'>" + escapeHtml(v.status) + "</span></td>" +
+                                        "</tr>";
+                            });
+                            if (tbody) tbody.innerHTML = html;
+                            if (tableWrap) tableWrap.style.display = "block";
+                        }
+                    })
+                    .catch(function (err) {
+                        if (loadingEl) loadingEl.style.display = "none";
+                        if (emptyEl) {
+                            emptyEl.textContent = "Error loading audit records: " + err.message;
+                            emptyEl.style.display = "flex";
+                        }
+                    });
+            });
+        });
+
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+    });
+    </script>
 
     <!-- Include Footer -->
     <jsp:include page="/WEB-INF/views/common/footer.jsp" />

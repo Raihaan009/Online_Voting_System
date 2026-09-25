@@ -77,6 +77,9 @@ public class AuditDAO {
     /**
      * Fetches the most recent audit logs ordered by creation timestamp descending.
      *
+    /**
+     * Fetches the most recent audit logs ordered by creation timestamp descending.
+     *
      * @param limit maximum number of logs to return
      * @return list of {@link AuditLog} instances
      */
@@ -108,6 +111,118 @@ public class AuditDAO {
             System.err.println("Error retrieving recent audit logs: " + e.getMessage());
         }
         return logs;
+    }
+
+    /**
+     * Fetches administrator operations & logins (excluding voter authentication events).
+     *
+     * @param limit maximum number of administrative logs to return
+     * @return list of administrative {@link AuditLog} instances
+     */
+    public List<AuditLog> getAdminLogs(int limit) {
+        List<AuditLog> logs = new ArrayList<>();
+        int safeLimit = limit > 0 ? limit : 100;
+        String sql = "SELECT log_id, admin_email, action_type, details, ip_address, created_at " +
+                     "FROM audit_logs WHERE action_type NOT LIKE 'VOTER_%' " +
+                     "ORDER BY created_at DESC, log_id DESC LIMIT ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, safeLimit);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    AuditLog log = new AuditLog(
+                            rs.getLong("log_id"),
+                            rs.getString("admin_email"),
+                            rs.getString("action_type"),
+                            rs.getString("details"),
+                            rs.getString("ip_address"),
+                            rs.getTimestamp("created_at")
+                    );
+                    logs.add(log);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving admin audit logs: " + e.getMessage());
+        }
+        return logs;
+    }
+
+    /**
+     * Fetches voter authentication history logs (actionType: 'VOTER_LOGIN', 'VOTER_LOGIN_FAILED', etc.).
+     *
+     * @param limit maximum number of voter authentication logs to return
+     * @return list of voter {@link AuditLog} instances
+     */
+    public List<AuditLog> getVoterLoginLogs(int limit) {
+        List<AuditLog> logs = new ArrayList<>();
+        int safeLimit = limit > 0 ? limit : 100;
+        String sql = "SELECT log_id, admin_email, action_type, details, ip_address, created_at " +
+                     "FROM audit_logs WHERE action_type LIKE 'VOTER_%' " +
+                     "ORDER BY created_at DESC, log_id DESC LIMIT ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, safeLimit);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    AuditLog log = new AuditLog(
+                            rs.getLong("log_id"),
+                            rs.getString("admin_email"),
+                            rs.getString("action_type"),
+                            rs.getString("details"),
+                            rs.getString("ip_address"),
+                            rs.getTimestamp("created_at")
+                    );
+                    logs.add(log);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving voter login audit logs: " + e.getMessage());
+        }
+        return logs;
+    }
+
+    /**
+     * Retrieves total count of administrative governance logs.
+     *
+     * @return admin log count
+     */
+    public long getAdminLogCount() {
+        String sql = "SELECT COUNT(*) FROM audit_logs WHERE action_type NOT LIKE 'VOTER_%'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching admin log count: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Retrieves total count of voter authentication logs.
+     *
+     * @return voter authentication log count
+     */
+    public long getVoterLogCount() {
+        String sql = "SELECT COUNT(*) FROM audit_logs WHERE action_type LIKE 'VOTER_%'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching voter log count: " + e.getMessage());
+        }
+        return 0;
     }
 
     /**

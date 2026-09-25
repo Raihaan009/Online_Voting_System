@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voter Authentication - Online Voting System</title>
+    <title>Voter Authentication - CampusVote | Online Voting System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="auth-page">
@@ -17,6 +17,10 @@
         <div class="auth-card">
             <!-- Header Icon & Title -->
             <div class="auth-header">
+                <div class="brand-hierarchy-badge">
+                    <span class="brand-title-mini">CampusVote</span>
+                    <span class="brand-secondary-text">ONLINE VOTING SYSTEM</span>
+                </div>
                 <div class="auth-icon-badge">👤</div>
                 <h2>Voter Sign In</h2>
                 <p>Access your institutional ballot and active campus elections</p>

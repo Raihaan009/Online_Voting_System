@@ -2,7 +2,7 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
 <%-- If accessed directly without going through AdminAuditServlet, redirect --%>
-<c:if test="${empty auditLogs && empty totalLogCount}">
+<c:if test="${empty adminLogs && empty voterLogs && empty totalLogCount}">
     <c:redirect url="/admin/audit" />
 </c:if>
 
@@ -11,7 +11,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Audit Trail - Online Voting System</title>
+    <title>Security Audit Trail - CampusVote | Online Voting System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="admin-page">
@@ -30,7 +30,7 @@
             <div class="admin-banner-text">
                 <div class="banner-pill admin-pill">Enterprise Governance</div>
                 <h1 class="admin-banner-title">Security & Operations Audit Trail</h1>
-                <p class="admin-banner-sub">Immutable, timestamped record of administrative interventions, provisioning, and authentication events.</p>
+                <p class="admin-banner-sub">Immutable, timestamped record of administrative interventions, provisioning, and voter authentication telemetry.</p>
             </div>
             <div class="admin-banner-actions">
                 <span class="live-pulse-badge">
@@ -42,18 +42,18 @@
         <!-- Summary Metrics Grid -->
         <section class="metrics-grid" style="margin-bottom: 2rem;">
             <div class="metric-card">
-                <div class="metric-icon-wrap icon-blue">📜</div>
+                <div class="metric-icon-wrap icon-blue">🛡️</div>
                 <div class="metric-data">
-                    <span class="metric-num">${totalLogCount}</span>
-                    <span class="metric-title">Total Operations Logged</span>
+                    <span class="metric-num">${totalAdminLogs}</span>
+                    <span class="metric-title">Admin Operations Logged</span>
                 </div>
             </div>
 
             <div class="metric-card">
-                <div class="metric-icon-wrap icon-purple">🛡️</div>
+                <div class="metric-icon-wrap icon-purple">👥</div>
                 <div class="metric-data">
-                    <span class="metric-num">${auditLogs.size()}</span>
-                    <span class="metric-title">Showing Recent Records</span>
+                    <span class="metric-num">${totalVoterLogs}</span>
+                    <span class="metric-title">Voter Authentications</span>
                 </div>
             </div>
 
@@ -68,33 +68,49 @@
             <div class="metric-card">
                 <div class="metric-icon-wrap icon-amber">⏱️</div>
                 <div class="metric-data">
-                    <span class="metric-num" style="font-size: 1.1rem;">Append-Only</span>
-                    <span class="metric-title">Storage Integrity Model</span>
+                    <span class="metric-num">${totalLogCount}</span>
+                    <span class="metric-title">Total Unified Audit Logs</span>
                 </div>
             </div>
         </section>
 
-        <!-- Audit Records Table Section -->
-        <section class="admin-results-section" style="margin-bottom: 3rem;">
+        <!-- Filter & Export Controls Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+            <!-- Tab Navigation Buttons -->
+            <div class="audit-tabs-nav" style="margin-bottom: 0;">
+                <button type="button" class="audit-tab-btn active" id="tabBtnAdmin" onclick="switchAuditTab('admin')">
+                    🛡️ Admin Operations & Logins <span class="tab-badge">${totalAdminLogs}</span>
+                </button>
+                <button type="button" class="audit-tab-btn" id="tabBtnVoter" onclick="switchAuditTab('voter')">
+                    👥 Voter Authentication History <span class="tab-badge">${totalVoterLogs}</span>
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <form action="${pageContext.request.contextPath}/admin/audit" method="GET" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <label for="limitSelect" class="form-label" style="margin-bottom: 0; font-size: 0.85rem;">Display Limit:</label>
+                    <select id="limitSelect" name="limit" class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
+                        <option value="50" ${currentLimit == 50 ? 'selected' : ''}>50</option>
+                        <option value="100" ${currentLimit == 100 ? 'selected' : ''}>100</option>
+                        <option value="200" ${currentLimit == 200 ? 'selected' : ''}>200</option>
+                        <option value="500" ${currentLimit == 500 ? 'selected' : ''}>500</option>
+                    </select>
+                </form>
+                <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+                    🖨️ Export View
+                </button>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 1: Admin Operations & Logins Section                          -->
+        <!-- ================================================================= -->
+        <section id="auditPanelAdmin" class="admin-results-section" style="margin-bottom: 3rem;">
             <div class="election-tally-card">
-                <div class="tally-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div class="tally-card-header">
                     <div>
-                        <h2 class="tally-election-title" style="font-size: 1.25rem;">Administrative Governance Ledger</h2>
-                        <p class="tally-election-desc">Real-time system telemetry and administrator accountability log.</p>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <form action="${pageContext.request.contextPath}/admin/audit" method="GET" style="display: flex; gap: 0.5rem; align-items: center;">
-                            <label for="limitSelect" class="form-label" style="margin-bottom: 0; font-size: 0.85rem;">Records:</label>
-                            <select id="limitSelect" name="limit" class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
-                                <option value="50" ${currentLimit == 50 ? 'selected' : ''}>50</option>
-                                <option value="100" ${currentLimit == 100 ? 'selected' : ''}>100</option>
-                                <option value="200" ${currentLimit == 200 ? 'selected' : ''}>200</option>
-                                <option value="500" ${currentLimit == 500 ? 'selected' : ''}>500</option>
-                            </select>
-                        </form>
-                        <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-secondary">
-                            🖨️ Export Log
-                        </button>
+                        <h2 class="tally-election-title" style="font-size: 1.25rem;">Admin Operations & Governance Ledger</h2>
+                        <p class="tally-election-desc">Administrative activities, election modifications, candidate nominations, and admin logins.</p>
                     </div>
                 </div>
 
@@ -105,20 +121,20 @@
                                 <th style="width: 70px;">ID</th>
                                 <th style="width: 175px;">Timestamp</th>
                                 <th style="width: 200px;">Administrator</th>
-                                <th style="width: 170px;">Action Type</th>
+                                <th style="width: 180px;">Action Type</th>
                                 <th style="width: 140px;">IP Address</th>
                                 <th>Operation Metadata</th>
                             </tr>
                         </thead>
                         <tbody>
                             <c:choose>
-                                <c:when test="${not empty auditLogs}">
-                                    <c:forEach var="log" items="${auditLogs}">
+                                <c:when test="${not empty adminLogs}">
+                                    <c:forEach var="log" items="${adminLogs}">
                                         <tr>
                                             <td>
                                                 <span class="rank-col">#${log.logId}</span>
                                             </td>
-                                            <td style="font-family: var(--font-mono); font-size: 0.8rem; color: #94a3b8;">
+                                            <td style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
                                                 ${log.createdAt}
                                             </td>
                                             <td>
@@ -147,11 +163,11 @@
                                                 </c:choose>
                                             </td>
                                             <td>
-                                                <code style="background: #020617; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: #38bdf8; border: 1px solid #1e293b;">
+                                                <code style="background: var(--secondary-light); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: var(--primary); border: 1px solid var(--border);">
                                                     ${log.ipAddress}
                                                 </code>
                                             </td>
-                                            <td style="font-size: 0.85rem; color: #cbd5e1;">
+                                            <td style="font-size: 0.85rem; color: var(--text-secondary);">
                                                 <c:out value="${log.details}" />
                                             </td>
                                         </tr>
@@ -162,8 +178,88 @@
                                         <td colspan="6" class="text-center text-muted" style="padding: 2.5rem 1rem;">
                                             <div class="empty-state-card" style="margin: 0; box-shadow: none; border: none; background: transparent;">
                                                 <div class="empty-icon">🛡️</div>
-                                                <h3>No Audit Records Logged Yet</h3>
-                                                <p>Administrative actions such as election provisioning and status toggles will be recorded here.</p>
+                                                <h3>No Administrative Records Found</h3>
+                                                <p>Administrative activities will be automatically recorded here as they occur.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:otherwise>
+                            </c:choose>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- TAB 2: Voter Authentication History Section                       -->
+        <!-- ================================================================= -->
+        <section id="auditPanelVoter" class="admin-results-section" style="display: none; margin-bottom: 3rem;">
+            <div class="election-tally-card">
+                <div class="tally-card-header">
+                    <div>
+                        <h2 class="tally-election-title" style="font-size: 1.25rem;">Voter Authentication History Ledger</h2>
+                        <p class="tally-election-desc">Real-time log of student and institutional voter logins, status verifications, and access attempts.</p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="tally-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">ID</th>
+                                <th style="width: 175px;">Timestamp</th>
+                                <th style="width: 220px;">Voter Email</th>
+                                <th style="width: 150px;">Authentication Status</th>
+                                <th style="width: 140px;">IP Address</th>
+                                <th>Authentication Metadata</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:choose>
+                                <c:when test="${not empty voterLogs}">
+                                    <c:forEach var="vlog" items="${voterLogs}">
+                                        <tr>
+                                            <td>
+                                                <span class="rank-col">#${vlog.logId}</span>
+                                            </td>
+                                            <td style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+                                                ${vlog.createdAt}
+                                            </td>
+                                            <td>
+                                                <strong>${vlog.adminEmail}</strong>
+                                            </td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${vlog.actionType == 'VOTER_LOGIN'}">
+                                                        <span class="badge badge-success">✓ SUCCESS</span>
+                                                    </c:when>
+                                                    <c:when test="${vlog.actionType == 'VOTER_LOGIN_FAILED'}">
+                                                        <span class="badge badge-danger">✗ FAILED</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge badge-secondary">${vlog.actionType}</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td>
+                                                <code style="background: var(--secondary-light); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: var(--primary); border: 1px solid var(--border);">
+                                                    ${vlog.ipAddress}
+                                                </code>
+                                            </td>
+                                            <td style="font-size: 0.85rem; color: var(--text-secondary);">
+                                                <c:out value="${vlog.details}" />
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted" style="padding: 2.5rem 1rem;">
+                                            <div class="empty-state-card" style="margin: 0; box-shadow: none; border: none; background: transparent;">
+                                                <div class="empty-icon">👥</div>
+                                                <h3>No Voter Authentication Records Yet</h3>
+                                                <p>Student voter logins from the voter portal will be recorded here in real-time.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -176,6 +272,27 @@
         </section>
 
     </main>
+
+    <script>
+        function switchAuditTab(tabName) {
+            var adminPanel = document.getElementById("auditPanelAdmin");
+            var voterPanel = document.getElementById("auditPanelVoter");
+            var btnAdmin = document.getElementById("tabBtnAdmin");
+            var btnVoter = document.getElementById("tabBtnVoter");
+
+            if (tabName === "voter") {
+                if (adminPanel) adminPanel.style.display = "none";
+                if (voterPanel) voterPanel.style.display = "block";
+                if (btnAdmin) btnAdmin.classList.remove("active");
+                if (btnVoter) btnVoter.classList.add("active");
+            } else {
+                if (adminPanel) adminPanel.style.display = "block";
+                if (voterPanel) voterPanel.style.display = "none";
+                if (btnAdmin) btnAdmin.classList.add("active");
+                if (btnVoter) btnVoter.classList.remove("active");
+            }
+        }
+    </script>
 
     <!-- Include Footer -->
     <jsp:include page="/WEB-INF/views/common/footer.jsp" />

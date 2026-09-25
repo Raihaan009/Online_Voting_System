@@ -8,7 +8,10 @@
             <div class="footer-col">
                 <div class="footer-brand">
                     <span class="footer-logo-badge">V</span>
-                    <span class="footer-brand-name">Online Voting System</span>
+                    <div class="footer-brand-text">
+                        <span class="footer-brand-name">CampusVote</span>
+                        <span class="footer-brand-sub brand-secondary-text">ONLINE VOTING SYSTEM</span>
+                    </div>
                 </div>
                 <p class="footer-desc">
                     Enterprise 3-Tier MVC democratic electronic voting platform engineered with Java 17 LTS, Jakarta EE 10, and MySQL. 
@@ -46,7 +49,7 @@
 
         <div class="footer-bottom">
             <div class="footer-copy">
-                &copy; 2026 Online Voting System. Academic Micro-Project Submission for Full Stack Java Programming (FSJP).
+                &copy; 2026 CampusVote &bull; Online Voting System. Academic Micro-Project Submission for Full Stack Java Programming (FSJP).
             </div>
             <div class="footer-links">
                 <a href="${pageContext.request.contextPath}/">Home</a>

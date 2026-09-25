@@ -3,6 +3,7 @@ package com.ovs.dao;
 import com.ovs.config.DBConnection;
 import com.ovs.models.CandidateResult;
 import com.ovs.models.Vote;
+import com.ovs.models.Voter;
 import com.ovs.models.VoterElectionStatus;
 
 import java.nio.charset.StandardCharsets;
@@ -563,5 +564,46 @@ public class VoteDAO {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 cryptographic algorithm not available in current JVM", e);
         }
+    }
+
+    /**
+     * Retrieves the list of voters who voted for a specific candidate in a given election.
+     * Correlates secret ballots with voter participation receipts for administrative auditing.
+     *
+     * @param electionId  target election ID
+     * @param candidateId candidate identifier
+     * @return list of {@link Voter} instances who voted for the specified candidate
+     */
+    public List<Voter> getVotersForCandidate(long electionId, long candidateId) {
+        List<Voter> voters = new ArrayList<>();
+        String sql = "SELECT v.voter_id, v.name, v.email, v.status, v.has_voted, v.created_at " +
+                     "FROM voters v " +
+                     "JOIN voter_election_status ves ON v.voter_id = ves.voter_id " +
+                     "JOIN votes vt ON vt.receipt_token = ves.receipt_token AND vt.election_id = ves.election_id " +
+                     "WHERE vt.election_id = ? AND vt.candidate_id = ? " +
+                     "ORDER BY ves.voted_at DESC, v.name ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setLong(1, electionId);
+            pstmt.setLong(2, candidateId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Voter voter = new Voter();
+                    voter.setVoterId(rs.getLong("voter_id"));
+                    voter.setName(rs.getString("name"));
+                    voter.setEmail(rs.getString("email"));
+                    voter.setStatus(rs.getString("status"));
+                    voter.setHasVoted(rs.getBoolean("has_voted"));
+                    voter.setCreatedAt(rs.getTimestamp("created_at"));
+                    voters.add(voter);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving voters for candidate " + candidateId + " in election " + electionId + ": " + e.getMessage());
+        }
+        return voters;
     }
 }

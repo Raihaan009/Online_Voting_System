@@ -1,11 +1,44 @@
 /**
- * Online Voting System - Client Utility & Interaction Script
- * Phase 4: UI Interactions, Live Password Matching, Ballot Modal & Double-Submit Protection
+ * CampusVote - Client Utility & Interaction Script
+ * Enterprise 3-Tier MVC Architecture Client Script
+ * Handles Theme Toggling (Persistence), Password Matching, Ballot Modal, Double-Submit, & Audit Breakdowns
  */
 
-document.addEventListener("DOMContentLoaded", function () {
+// Immediate theme execution to prevent light-mode flickering on page load
+(function() {
+  const savedTheme = localStorage.getItem('campusvote_theme') || localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateIcon(savedTheme);
+})();
+
+function updateIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------------------
-    // 1. Live Client Timestamp Synchronization
+    // 1. Global Light / Dark Mode Toggle & Persistence
+    // -------------------------------------------------------------------------
+    const savedTheme = localStorage.getItem('campusvote_theme') || localStorage.getItem('theme') || 'light';
+    updateIcon(savedTheme);
+
+    const toggleBtn = document.getElementById('themeToggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('campusvote_theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. Live Client Timestamp Synchronization
     // -------------------------------------------------------------------------
     const timeElements = document.querySelectorAll("#client-timestamp");
     if (timeElements.length > 0) {
@@ -19,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // -------------------------------------------------------------------------
-    // 2. Real-Time Password Match Verification (Registration Form)
+    // 3. Real-Time Password Match Verification (Registration Form)
     // -------------------------------------------------------------------------
     const regPassword = document.getElementById("regPassword");
     const confirmPassword = document.getElementById("confirmPassword");
@@ -54,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // -------------------------------------------------------------------------
-    // 3. Voting Booth Candidate Selection & Card Highlighting
+    // 4. Voting Booth Candidate Selection & Card Highlighting
     // -------------------------------------------------------------------------
     const candidateRadios = document.querySelectorAll(".candidate-radio");
     const openModalBtn = document.getElementById("openConfirmModalBtn");
@@ -68,18 +101,15 @@ document.addEventListener("DOMContentLoaded", function () {
     if (candidateRadios.length > 0) {
         candidateRadios.forEach(radio => {
             radio.addEventListener("change", function () {
-                // Remove 'selected' styling from all candidate choice cards
                 document.querySelectorAll(".candidate-choice-card").forEach(card => {
                     card.classList.remove("selected");
                 });
 
-                // Add 'selected' class to the parent label of the selected radio
                 const card = this.closest(".candidate-choice-card");
                 if (card) {
                     card.classList.add("selected");
                 }
 
-                // Enable the "Review & Cast Ballot" trigger button
                 if (openModalBtn) {
                     openModalBtn.disabled = false;
                 }
@@ -88,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // -------------------------------------------------------------------------
-    // 4. Ballot Confirmation Modal Management
+    // 5. Ballot Confirmation Modal Management
     // -------------------------------------------------------------------------
     if (openModalBtn && confirmModal) {
         openModalBtn.addEventListener("click", function () {
@@ -114,7 +144,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Close modal if clicking outside the modal card
     if (confirmModal) {
         confirmModal.addEventListener("click", function (e) {
             if (e.target === confirmModal) {
@@ -124,16 +153,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // -------------------------------------------------------------------------
-    // 5. Final Vote Submission & Double-Submit Protection
+    // 6. Final Vote Submission & Double-Submit Protection
     // -------------------------------------------------------------------------
     if (submitFinalVoteBtn && voteForm) {
         submitFinalVoteBtn.addEventListener("click", function () {
-            // Disable button and show processing status
             submitFinalVoteBtn.disabled = true;
             submitFinalVoteBtn.textContent = "Committing Ballot...";
             submitFinalVoteBtn.style.opacity = "0.7";
-
-            // Submit the ballot form to VoteServlet
             voteForm.submit();
         });
     }
@@ -144,7 +170,7 @@ document.addEventListener("DOMContentLoaded", function () {
     preventDoubleSubmit("registerForm", "registerSubmitBtn", "Creating Account...");
 
     // -------------------------------------------------------------------------
-    // 6. Dynamic Progress Bar Widths (Electoral Results & Tabulation)
+    // 7. Dynamic Progress Bar Widths (Electoral Results & Tabulation)
     // -------------------------------------------------------------------------
     document.querySelectorAll(".progress-bar-fill[data-progress]").forEach(function (bar) {
         var progress = parseFloat(bar.getAttribute("data-progress")) || 0;
@@ -193,7 +219,6 @@ function copyToClipboard(elementId, btn) {
         }, 2200);
     }).catch(err => {
         console.error("Clipboard copy failed: ", err);
-        // Fallback for browsers with restricted clipboard permissions
         const textarea = document.createElement("textarea");
         textarea.value = text.trim();
         document.body.appendChild(textarea);
