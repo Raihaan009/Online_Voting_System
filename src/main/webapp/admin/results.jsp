@@ -253,14 +253,14 @@
                 </section>
 
                 <!-- Cryptographic Receipt Token Audit Search Box -->
-                <section class="arch-container" style="background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b;">
+                <section class="arch-container audit-search-card" style="margin-bottom: 2.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem;">
                         <span style="font-size: 1.5rem;">🔍</span>
                         <div>
-                            <h3 style="color: #f8fafc; font-size: 1.2rem; font-weight: 800;">
+                            <h3 style="color: var(--text-primary); font-size: 1.2rem; font-weight: 800; margin: 0 0 0.25rem 0;">
                                 Cryptographic Ballot Audit Trail Verification
                             </h3>
-                            <p style="color: #94a3b8; font-size: 0.85rem;">
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
                                 Enter a student's 64-character SHA-256 digital receipt token to verify that their ballot was legitimately recorded in this election's secret ballot box:
                             </p>
                         </div>
@@ -271,7 +271,7 @@
                         <input type="text" name="receiptToken" class="form-control" 
                                value="${auditTokenSearched}" 
                                placeholder="e.g. 0ffe2a845b41dc4368f839e12cc58e5370865460e2103747592f12805da8b402" 
-                               style="flex: 1; min-width: 300px; font-family: var(--font-mono); font-size: 0.85rem; background: #020617; border-color: #334155; color: #38bdf8;" required>
+                               style="flex: 1; min-width: 300px; font-family: var(--font-mono); font-size: 0.85rem;" required>
                         <button type="submit" class="btn btn-primary">
                             Verify Ballot Audit Trail &rarr;
                         </button>

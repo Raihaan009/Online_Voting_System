@@ -51,6 +51,13 @@ public class VoteBoothServlet extends HttpServlet {
             return;
         }
 
+        // Enforce mandatory voter profile completion gatekeeper
+        if (!voter.isProfileComplete()) {
+            String warningMsg = URLEncoder.encode("Please complete your official student profile before participating in any elections.", StandardCharsets.UTF_8);
+            response.sendRedirect(request.getContextPath() + "/voter/profile?warning=" + warningMsg);
+            return;
+        }
+
         String electionIdParam = request.getParameter("electionId");
         if (electionIdParam == null || electionIdParam.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/voter/dashboard");

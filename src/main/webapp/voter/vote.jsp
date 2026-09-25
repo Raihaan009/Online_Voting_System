@@ -1,6 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
+<%-- Mandatory Voter Profile Verification Gatekeeper --%>
+<c:if test="${not empty sessionScope.currentUser && !sessionScope.currentUser.profileComplete}">
+    <c:redirect url="/voter/profile?warning=Please+complete+your+official+student+profile+before+participating+in+any+elections." />
+</c:if>
+
 <%-- Defensive redirect if election attribute is missing --%>
 <c:if test="${empty election}">
     <c:choose>

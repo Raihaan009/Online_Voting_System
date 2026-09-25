@@ -32,12 +32,14 @@ public class VoterDashboardServlet extends HttpServlet {
     private ElectionDAO electionDAO;
     private CandidateDAO candidateDAO;
     private VoteDAO voteDAO;
+    private com.ovs.dao.VoterDAO voterDAO;
 
     @Override
     public void init() throws ServletException {
         this.electionDAO = new ElectionDAO();
         this.candidateDAO = new CandidateDAO();
         this.voteDAO = new VoteDAO();
+        this.voterDAO = new com.ovs.dao.VoterDAO();
     }
 
     @Override
@@ -51,6 +53,13 @@ public class VoterDashboardServlet extends HttpServlet {
             String errMsg = URLEncoder.encode("Please log in to access the voter dashboard.", StandardCharsets.UTF_8);
             response.sendRedirect(request.getContextPath() + "/login.jsp?error=" + errMsg);
             return;
+        }
+
+        // Keep session voter data in sync with database profile
+        Voter freshVoter = voterDAO.findById(voter.getVoterId());
+        if (freshVoter != null) {
+            voter = freshVoter;
+            session.setAttribute("currentUser", freshVoter);
         }
 
         // Fetch all active elections

@@ -94,6 +94,68 @@ public class VoterDAO {
         return null;
     }
 
+    private static volatile boolean schemaInitialized = false;
+
+    private static synchronized void ensureProfileColumnsExist() {
+        if (schemaInitialized) return;
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+            java.sql.DatabaseMetaData meta = conn.getMetaData();
+            try (ResultSet rs = meta.getColumns(null, null, "voters", "is_profile_complete")) {
+                if (!rs.next()) {
+                    try { stmt.executeUpdate("ALTER TABLE voters ADD COLUMN age INT DEFAULT 18"); } catch (Exception ignored) {}
+                    try { stmt.executeUpdate("ALTER TABLE voters ADD COLUMN academic_year VARCHAR(50) DEFAULT NULL"); } catch (Exception ignored) {}
+                    try { stmt.executeUpdate("ALTER TABLE voters ADD COLUMN branch VARCHAR(100) DEFAULT NULL"); } catch (Exception ignored) {}
+                    try { stmt.executeUpdate("ALTER TABLE voters ADD COLUMN is_profile_complete TINYINT(1) NOT NULL DEFAULT 0"); } catch (Exception ignored) {}
+                }
+            }
+            schemaInitialized = true;
+        } catch (Exception e) {
+            // Non-fatal if database user lacks ALTER permissions or columns already exist
+        }
+    }
+
+    /**
+     * Updates an existing voter's institutional profile details and marks profile as complete.
+     * Sets is_profile_complete = TRUE upon successful execution.
+     *
+     * @param voterId      unique identifier of the voter
+     * @param name         full name of the student voter
+     * @param age          age in years (must be positive integer between 17 and 99)
+     * @param academicYear academic progress standing (e.g. First Year, Second Year, Third Year, Final Year)
+     * @param branch       academic department/branch (e.g. Computer Engineering, IT, AI & Data Science)
+     * @return true if updated successfully, false otherwise
+     */
+    public boolean updateVoterProfile(long voterId, String name, int age, String academicYear, String branch) {
+        ensureProfileColumnsExist();
+        String sql = "UPDATE voters SET name = ?, age = ?, academic_year = ?, branch = ?, is_profile_complete = TRUE WHERE voter_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, name != null ? name.trim() : "");
+            pstmt.setInt(2, age);
+            pstmt.setString(3, academicYear != null ? academicYear.trim() : "");
+            pstmt.setString(4, branch != null ? branch.trim() : "");
+            pstmt.setLong(5, voterId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating voter profile (ID: " + voterId + "): " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Finds a voter by their unique ID (alias for getVoterById).
+     *
+     * @param voterId primary key identifier of the voter
+     * @return {@link Voter} domain model or null if not found
+     */
+    public Voter findById(long voterId) {
+        return getVoterById(voterId);
+    }
+
     /**
      * Retrieves a voter by their unique ID.
      *
@@ -101,7 +163,8 @@ public class VoterDAO {
      * @return {@link Voter} domain model or null if not found
      */
     public Voter getVoterById(long voterId) {
-        String sql = "SELECT voter_id, name, email, password_hash, has_voted, status, created_at FROM voters WHERE voter_id = ?";
+        ensureProfileColumnsExist();
+        String sql = "SELECT voter_id, name, email, password_hash, has_voted, status, age, academic_year, branch, is_profile_complete, created_at FROM voters WHERE voter_id = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -120,6 +183,16 @@ public class VoterDAO {
     }
 
     /**
+     * Finds a voter by their unique email address (alias for getVoterByEmail).
+     *
+     * @param email unique email address of the voter
+     * @return {@link Voter} domain model or null if not found
+     */
+    public Voter findByEmail(String email) {
+        return getVoterByEmail(email);
+    }
+
+    /**
      * Retrieves a voter by their unique email address.
      *
      * @param email unique email address of the voter
@@ -130,7 +203,8 @@ public class VoterDAO {
             return null;
         }
 
-        String sql = "SELECT voter_id, name, email, password_hash, has_voted, status, created_at FROM voters WHERE email = ?";
+        ensureProfileColumnsExist();
+        String sql = "SELECT voter_id, name, email, password_hash, has_voted, status, age, academic_year, branch, is_profile_complete, created_at FROM voters WHERE email = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -241,8 +315,9 @@ public class VoterDAO {
      * @return list of {@link Voter} entities
      */
     public List<Voter> getAllVoters() {
+        ensureProfileColumnsExist();
         List<Voter> voters = new ArrayList<>();
-        String sql = "SELECT voter_id, name, email, password_hash, has_voted, status, created_at FROM voters ORDER BY voter_id ASC";
+        String sql = "SELECT voter_id, name, email, password_hash, has_voted, status, age, academic_year, branch, is_profile_complete, created_at FROM voters ORDER BY voter_id ASC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -265,7 +340,7 @@ public class VoterDAO {
      * @throws SQLException if a column reading error occurs
      */
     private Voter mapResultSetToVoter(ResultSet rs) throws SQLException {
-        return new Voter(
+        Voter voter = new Voter(
                 rs.getLong("voter_id"),
                 rs.getString("name"),
                 rs.getString("email"),
@@ -274,5 +349,22 @@ public class VoterDAO {
                 rs.getString("status"),
                 rs.getTimestamp("created_at")
         );
+        try {
+            voter.setAge(rs.getInt("age"));
+        } catch (SQLException ignored) {}
+        try {
+            voter.setAcademicYear(rs.getString("academic_year"));
+        } catch (SQLException ignored) {}
+        try {
+            String branch = rs.getString("branch");
+            voter.setBranch(branch);
+            if (branch != null && !branch.trim().isEmpty()) {
+                voter.setDepartment(branch.trim());
+            }
+        } catch (SQLException ignored) {}
+        try {
+            voter.setProfileComplete(rs.getBoolean("is_profile_complete"));
+        } catch (SQLException ignored) {}
+        return voter;
     }
 }

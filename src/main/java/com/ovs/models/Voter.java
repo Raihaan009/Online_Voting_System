@@ -16,6 +16,10 @@ public class Voter implements Serializable {
     private String passwordHash;
     private boolean hasVoted;
     private String status;
+    private int age;
+    private String academicYear;
+    private String branch;
+    private boolean profileComplete;
     private String department = "Computer Science";
     private Timestamp createdAt;
 
@@ -43,6 +47,26 @@ public class Voter implements Serializable {
         this.passwordHash = passwordHash;
         this.hasVoted = hasVoted;
         this.status = status;
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * Complete domain constructor including profile verification attributes.
+     */
+    public Voter(long voterId, String name, String email, String passwordHash, boolean hasVoted, String status, int age, String academicYear, String branch, boolean profileComplete, Timestamp createdAt) {
+        this.voterId = voterId;
+        this.name = name;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.hasVoted = hasVoted;
+        this.status = status;
+        this.age = age;
+        this.academicYear = academicYear;
+        this.branch = branch;
+        if (branch != null && !branch.trim().isEmpty()) {
+            this.department = branch.trim();
+        }
+        this.profileComplete = profileComplete;
         this.createdAt = createdAt;
     }
 
@@ -113,12 +137,57 @@ public class Voter implements Serializable {
         this.status = status;
     }
 
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getAcademicYear() {
+        return academicYear;
+    }
+
+    public void setAcademicYear(String academicYear) {
+        this.academicYear = academicYear;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+        if (branch != null && !branch.trim().isEmpty()) {
+            this.department = branch.trim();
+        }
+    }
+
+    public boolean isProfileComplete() {
+        return profileComplete;
+    }
+
+    public boolean getProfileComplete() {
+        return profileComplete;
+    }
+
+    public void setProfileComplete(boolean profileComplete) {
+        this.profileComplete = profileComplete;
+    }
+
     public String getDepartment() {
-        return department != null ? department : "Computer Science";
+        if (branch != null && !branch.trim().isEmpty()) {
+            return branch.trim();
+        }
+        return department != null ? department : "Computer Engineering";
     }
 
     public void setDepartment(String department) {
         this.department = department;
+        if (this.branch == null && department != null) {
+            this.branch = department;
+        }
     }
 
     public Timestamp getCreatedAt() {
@@ -137,6 +206,10 @@ public class Voter implements Serializable {
                 ", email='" + email + '\'' +
                 ", hasVoted=" + hasVoted +
                 ", status='" + status + '\'' +
+                ", age=" + age +
+                ", academicYear='" + academicYear + '\'' +
+                ", branch='" + branch + '\'' +
+                ", profileComplete=" + profileComplete +
                 ", createdAt=" + createdAt +
                 '}';
     }

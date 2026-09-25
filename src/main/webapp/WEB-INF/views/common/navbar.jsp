@@ -18,7 +18,7 @@
         <a href="${pageContext.request.contextPath}/" class="logo-brand">
             <div class="logo-badge" aria-label="CampusVote Emblem">
                 <svg class="brand-emblem-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9L12 3L21 9V10H3V9Z" fill="currentColor" fill-opacity="0.15"/>
+                    <path class="emblem-dome" d="M3 9L12 3L21 9V10H3V9Z" fill="currentColor" fill-opacity="0.2"/>
                     <path d="M3 10H21"/>
                     <path d="M6 10V17"/>
                     <path d="M10 10V17"/>
@@ -43,6 +43,17 @@
                 <%-- Voter Authenticated Session --%>
                 <c:when test="${not empty sessionScope.currentUser}">
                     <a href="${pageContext.request.contextPath}/voter/dashboard" class="nav-link">Voter Dashboard</a>
+                    <a href="${pageContext.request.contextPath}/voter/profile" class="nav-link nav-profile-link" title="Manage official student profile">
+                        My Profile
+                        <c:choose>
+                            <c:when test="${sessionScope.currentUser.profileComplete}">
+                                <span class="profile-nav-badge badge-complete" title="Profile Complete">✓ Complete</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="profile-nav-badge badge-incomplete" title="Profile Incomplete - Action Required">⚠️ Incomplete</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </a>
                     <div class="user-pill voter-pill">
                         <span class="user-avatar">👤</span>
                         <span class="user-name">${sessionScope.currentUser.name}</span>

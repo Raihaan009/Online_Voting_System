@@ -429,8 +429,8 @@ a:hover {
 }
 
 .logo-badge {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: white;
+    background: #0D5C75;
+    color: #FFFFFF;
     width: 40px;
     height: 40px;
     border-radius: var(--radius-md);
@@ -439,7 +439,28 @@ a:hover {
     justify-content: center;
     font-weight: 800;
     font-size: 1.2rem;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 10px rgba(13, 92, 117, 0.25);
+    border: 1px solid transparent;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.logo-badge .brand-emblem-svg {
+    width: 24px;
+    height: 24px;
+    color: #FFFFFF;
+    stroke: #FFFFFF;
+    display: block;
+}
+
+.logo-badge .brand-emblem-svg path {
+    stroke: #FFFFFF;
+}
+
+.logo-badge .brand-emblem-svg .emblem-dome,
+.logo-badge .brand-emblem-svg path[fill-opacity] {
+    fill: #FFFFFF;
+    fill-opacity: 0.25;
 }
 
 .logo-text { display: flex; flex-direction: column; }
@@ -960,25 +981,46 @@ a:hover {
     margin-bottom: 0.65rem;
 }
 
-.candidate-pill-list {
+.candidate-pill-list,
+.candidate-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
 }
 
-.candidate-pill {
-    background: #f8fafc;
-    border: 1px solid var(--border);
+.candidate-pill,
+.candidate-item,
+.candidate-row {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    color: #1E293B;
     border-radius: var(--radius-sm);
-    padding: 0.3rem 0.65rem;
+    padding: 0.35rem 0.75rem;
     font-size: 0.825rem;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.45rem;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.candidate-pill-symbol { font-weight: bold; }
-.candidate-pill-name { color: var(--text-primary); font-weight: 600; }
+.candidate-pill-symbol,
+.candidate-symbol {
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.candidate-pill-name,
+.candidate-name {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.candidate-party,
+.candidate-party-text {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
 
 .election-card-footer {
     padding-top: 1rem;
@@ -2039,6 +2081,147 @@ a:hover {
 [data-theme="dark"] .selected-candidate-preview {
     background: var(--bg-body) !important;
     border-color: var(--border-color) !important;
+}
+
+/* Candidate Roster & Badge Contrast Overrides in Dark Mode */
+[data-theme="dark"] .candidate-pill,
+[data-theme="dark"] .candidate-item,
+[data-theme="dark"] .candidate-row,
+[data-theme="dark"] .candidate-list .candidate-pill,
+[data-theme="dark"] .candidate-pill-list .candidate-pill {
+    background: #0F172A !important;
+    border: 1px solid #334155 !important;
+    color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .candidate-pill-symbol,
+[data-theme="dark"] .candidate-symbol {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .candidate-pill-name,
+[data-theme="dark"] .candidate-name {
+    color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .candidate-party,
+[data-theme="dark"] .candidate-party-text {
+    color: var(--text-muted) !important;
+}
+
+/* CampusVote Navbar Logo Icon in Dark Mode */
+[data-theme="dark"] .logo-badge {
+    background: #1E293B !important;
+    border: 1px solid #38BDF8 !important;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25) !important;
+}
+
+[data-theme="dark"] .logo-badge .brand-emblem-svg,
+[data-theme="dark"] .brand-emblem-svg {
+    color: #38BDF8 !important;
+    stroke: #38BDF8 !important;
+}
+
+[data-theme="dark"] .logo-badge .brand-emblem-svg path {
+    stroke: #38BDF8 !important;
+}
+
+[data-theme="dark"] .logo-badge .brand-emblem-svg .emblem-dome,
+[data-theme="dark"] .logo-badge .brand-emblem-svg path[fill-opacity] {
+    fill: #38BDF8 !important;
+    fill-opacity: 0.3 !important;
+}
+
+/* Electoral Standings Table & Badge Contrast in Dark Mode */
+[data-theme="dark"] .leader-row {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+[data-theme="dark"] .trophy-badge {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.45) !important;
+}
+
+[data-theme="dark"] .symbol-tag {
+    background: #1E293B !important;
+    color: #F8FAFC !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .progress-bar-wrap {
+    background: #334155 !important;
+}
+
+[data-theme="dark"] .tally-summary-pill {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+}
+
+/* Voter Profile Navigation Indicator & Card Styles */
+.nav-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.profile-nav-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.profile-nav-badge.badge-complete {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="dark"] .profile-nav-badge.badge-complete {
+    background: rgba(16, 185, 129, 0.22);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+.profile-nav-badge.badge-incomplete {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="dark"] .profile-nav-badge.badge-incomplete {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+.profile-card {
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="dark"] .profile-card {
+    background-color: var(--surface-card);
+    border-color: var(--border-color);
+}
+
+.arch-container {
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .arch-container {
+    background: var(--surface-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
 }
 
 [data-theme="dark"] .theme-toggle-btn {

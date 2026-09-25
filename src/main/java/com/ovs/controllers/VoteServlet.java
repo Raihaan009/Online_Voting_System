@@ -61,6 +61,13 @@ public class VoteServlet extends HttpServlet {
             return;
         }
 
+        // Enforce mandatory voter profile completion gatekeeper
+        if (!voter.isProfileComplete()) {
+            String warningMsg = URLEncoder.encode("Please complete your official student profile before participating in any elections.", StandardCharsets.UTF_8);
+            response.sendRedirect(request.getContextPath() + "/voter/profile?warning=" + warningMsg);
+            return;
+        }
+
         // 2. Validate CSRF Protection Token
         if (!com.ovs.util.CsrfUtil.isValidToken(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,

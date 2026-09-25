@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS voters (
     password_hash VARCHAR(255) NOT NULL COMMENT 'BCrypt 12-round salted hash',
     has_voted TINYINT(1) NOT NULL DEFAULT 0,
     status ENUM('PENDING', 'APPROVED', 'SUSPENDED', 'REJECTED') NOT NULL DEFAULT 'APPROVED',
+    age INT DEFAULT 18,
+    academic_year VARCHAR(50) DEFAULT NULL,
+    branch VARCHAR(100) DEFAULT NULL,
+    is_profile_complete TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (voter_id),
     UNIQUE KEY uq_voter_email (email)
@@ -155,3 +159,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     KEY idx_audit_admin (admin_email),
     KEY idx_audit_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================================
+-- Schema Migration Queries for Existing Installations
+-- =====================================================================
+-- ALTER TABLE voters ADD COLUMN age INT DEFAULT 18;
+-- ALTER TABLE voters ADD COLUMN academic_year VARCHAR(50) DEFAULT NULL;
+-- ALTER TABLE voters ADD COLUMN branch VARCHAR(100) DEFAULT NULL;
+-- ALTER TABLE voters ADD COLUMN is_profile_complete TINYINT(1) NOT NULL DEFAULT 0;
+

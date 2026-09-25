@@ -64,6 +64,21 @@
             </div>
         </c:if>
 
+        <!-- Profile Verification Warning Banner -->
+        <c:if test="${!sessionScope.currentUser.profileComplete}">
+            <div class="alert alert-warning" role="alert" style="margin-bottom: 2rem;">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; width: 100%; gap: 1rem;">
+                    <div>
+                        <strong>Mandatory Action Required:</strong> Please complete your official student profile before participating in any elections.
+                    </div>
+                    <a href="${pageContext.request.contextPath}/voter/profile" class="btn btn-sm btn-primary" style="white-space: nowrap;">
+                        Complete Profile Now &rarr;
+                    </a>
+                </div>
+            </div>
+        </c:if>
+
         <!-- Active Elections Section -->
         <section class="elections-section">
             <div class="section-heading-wrap">
@@ -101,9 +116,9 @@
                                     <c:set var="candidates" value="${candidatesMap[election.electionId]}" />
                                     <c:choose>
                                         <c:when test="${not empty candidates}">
-                                            <div class="candidate-pill-list">
+                                            <div class="candidate-pill-list candidate-list">
                                                 <c:forEach var="candidate" items="${candidates}">
-                                                    <div class="candidate-pill">
+                                                    <div class="candidate-pill candidate-item candidate-row">
                                                         <span class="candidate-pill-symbol">${candidate.partySymbol}</span>
                                                         <span class="candidate-pill-name">${candidate.name}</span>
                                                     </div>
@@ -127,6 +142,12 @@
                                                     <small>Your vote is recorded in the secret ballot box.</small>
                                                 </div>
                                             </div>
+                                        </c:when>
+                                        <c:when test="${!sessionScope.currentUser.profileComplete}">
+                                            <a href="${pageContext.request.contextPath}/voter/profile?warning=Please+complete+your+official+student+profile+before+participating+in+any+elections." 
+                                               class="btn btn-warning btn-block" title="Complete profile to unlock voting booth">
+                                                ⚠️ Complete Profile to Vote &rarr;
+                                            </a>
                                         </c:when>
                                         <c:otherwise>
                                             <a href="${pageContext.request.contextPath}/voter/vote?electionId=${election.electionId}" 
