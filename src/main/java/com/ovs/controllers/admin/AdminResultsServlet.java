@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +47,16 @@ public class AdminResultsServlet extends HttpServlet {
             return;
         }
 
-        List<Election> allElections = electionDAO.getAllElections();
+        List<Election> allElections = new ArrayList<>();
+        try {
+            allElections = electionDAO.getAllElections();
+        } catch (Exception e) {
+            System.err.println("Error fetching elections in AdminResultsServlet: " + e.getMessage());
+            e.printStackTrace();
+        }
+        if (allElections == null) {
+            allElections = new ArrayList<>();
+        }
         request.setAttribute("allElections", allElections);
 
         String electionIdParam = request.getParameter("electionId");
@@ -54,26 +65,131 @@ public class AdminResultsServlet extends HttpServlet {
         if (electionIdParam != null && !electionIdParam.trim().isEmpty()) {
             try {
                 selectedElectionId = Long.parseLong(electionIdParam.trim());
-            } catch (NumberFormatException ignored) {}
-        } else if (!allElections.isEmpty()) {
-            selectedElectionId = allElections.get(0).getElectionId();
+            } catch (NumberFormatException e) {
+                selectedElectionId = -1;
+            }
         }
 
+        // Attempt to find selected election
+        Election selectedElection = null;
         if (selectedElectionId > 0) {
-            Election selectedElection = electionDAO.getElectionById(selectedElectionId);
-            Map<String, Object> analytics = voteDAO.getElectionAnalytics(selectedElectionId);
-
-            request.setAttribute("selectedElectionId", selectedElectionId);
-            request.setAttribute("selectedElection", selectedElection);
-            request.setAttribute("analytics", analytics);
+            try {
+                selectedElection = electionDAO.getElectionById(selectedElectionId);
+            } catch (Exception e) {
+                System.err.println("Error fetching election by ID (" + selectedElectionId + "): " + e.getMessage());
+                e.printStackTrace();
+            }
         }
+
+        // If requested electionId is non-existent, invalid, or omitted, fallback gracefully to first available election
+        if (selectedElection == null && !allElections.isEmpty()) {
+            selectedElection = allElections.get(0);
+            selectedElectionId = selectedElection.getElectionId();
+        }
+
+        Map<String, Object> analytics = new HashMap<>();
+        Map<String, Integer> departmentTurnout = new LinkedHashMap<>();
+        String candLabelsJson = "[]";
+        String candVotesJson = "[]";
+        String deptLabelsJson = "[]";
+        String deptCountsJson = "[]";
+
+        if (selectedElection != null) {
+            try {
+                analytics = voteDAO.getElectionAnalytics(selectedElectionId);
+            } catch (Exception e) {
+                System.err.println("Error retrieving election analytics for election " + selectedElectionId + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+            if (analytics == null) {
+                analytics = new HashMap<>();
+            }
+
+            try {
+                departmentTurnout = voteDAO.getTurnoutByDepartment(selectedElectionId);
+            } catch (Exception e) {
+                System.err.println("Error retrieving department turnout for election " + selectedElectionId + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+            if (departmentTurnout == null) {
+                departmentTurnout = new LinkedHashMap<>();
+            }
+
+            // 1. Format clean JSON attributes for Candidate Results (List<CandidateResult>)
+            @SuppressWarnings("unchecked")
+            List<com.ovs.models.CandidateResult> candResults = 
+                (List<com.ovs.models.CandidateResult>) analytics.get("candidateResults");
+            if (candResults == null) {
+                candResults = new ArrayList<>();
+            }
+
+            StringBuilder cLabels = new StringBuilder("[");
+            StringBuilder cVotes = new StringBuilder("[");
+            for (int i = 0; i < candResults.size(); i++) {
+                com.ovs.models.CandidateResult c = candResults.get(i);
+                if (c == null) continue;
+                if (cLabels.length() > 1) {
+                    cLabels.append(",");
+                    cVotes.append(",");
+                }
+                cLabels.append("\"").append(escapeJson(c.getCandidateName())).append("\"");
+                cVotes.append(c.getTotalVotes());
+            }
+            cLabels.append("]");
+            cVotes.append("]");
+            candLabelsJson = cLabels.toString();
+            candVotesJson = cVotes.toString();
+
+            // 2. Format Turnout by Department JSON
+            StringBuilder dLabels = new StringBuilder("[");
+            StringBuilder dCounts = new StringBuilder("[");
+            int dIdx = 0;
+            for (Map.Entry<String, Integer> entry : departmentTurnout.entrySet()) {
+                if (dIdx > 0) {
+                    dLabels.append(",");
+                    dCounts.append(",");
+                }
+                dLabels.append("\"").append(escapeJson(entry.getKey())).append("\"");
+                dCounts.append(entry.getValue());
+                dIdx++;
+            }
+            dLabels.append("]");
+            dCounts.append("]");
+            deptLabelsJson = dLabels.toString();
+            deptCountsJson = dCounts.toString();
+        } else {
+            // Safe baseline fallback when no elections exist
+            analytics.put("totalEligibleVoters", 0L);
+            analytics.put("totalVotesCast", 0L);
+            analytics.put("turnoutPercentage", 0.0);
+            analytics.put("turnoutFormatted", "0.0");
+            analytics.put("candidateResults", new ArrayList<com.ovs.models.CandidateResult>());
+            analytics.put("candidateBreakdown", new ArrayList<Map<String, Object>>());
+            analytics.put("leadingCandidate", "None");
+        }
+
+        request.setAttribute("selectedElectionId", selectedElectionId);
+        request.setAttribute("selectedElection", selectedElection);
+        request.setAttribute("analytics", analytics);
+        request.setAttribute("departmentTurnout", departmentTurnout);
+        request.setAttribute("candLabelsJson", candLabelsJson);
+        request.setAttribute("candVotesJson", candVotesJson);
+        request.setAttribute("deptLabelsJson", deptLabelsJson);
+        request.setAttribute("deptCountsJson", deptCountsJson);
 
         // Handle Cryptographic Receipt Audit Search
         String receiptToken = request.getParameter("receiptToken");
         if (receiptToken != null && !receiptToken.trim().isEmpty()) {
             receiptToken = receiptToken.trim();
-            boolean isValid = voteDAO.verifyReceiptToken(selectedElectionId, receiptToken);
-            Map<String, Object> auditDetails = voteDAO.getReceiptAuditDetails(receiptToken);
+            boolean isValid = false;
+            Map<String, Object> auditDetails = null;
+            try {
+                isValid = voteDAO.verifyReceiptToken(selectedElectionId, receiptToken);
+                auditDetails = voteDAO.getReceiptAuditDetails(receiptToken);
+            } catch (Exception e) {
+                System.err.println("Error verifying receipt token: " + e.getMessage());
+                e.printStackTrace();
+            }
 
             request.setAttribute("auditTokenSearched", receiptToken);
             request.setAttribute("auditTokenValid", isValid);
@@ -85,6 +201,9 @@ public class AdminResultsServlet extends HttpServlet {
 
     private void handleGetCandidateVoters(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
         String electionIdParam = request.getParameter("electionId");
         String candidateIdParam = request.getParameter("candidateId");
 
@@ -98,7 +217,15 @@ public class AdminResultsServlet extends HttpServlet {
 
         List<Voter> voters = new ArrayList<>();
         if (electionId > 0 && candidateId > 0) {
-            voters = voteDAO.getVotersForCandidate(electionId, candidateId);
+            try {
+                voters = voteDAO.getVotersForCandidate(electionId, candidateId);
+            } catch (Exception e) {
+                System.err.println("Error fetching voters for candidate (" + candidateId + ") in election (" + electionId + "): " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        if (voters == null) {
+            voters = new ArrayList<>();
         }
 
         response.setContentType("application/json");

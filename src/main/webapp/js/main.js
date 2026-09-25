@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('campusvote_theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateIcon(newTheme);
+            window.dispatchEvent(new CustomEvent('campusvote:themechange', { detail: { theme: newTheme } }));
         });
     }
 
@@ -176,6 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
         var progress = parseFloat(bar.getAttribute("data-progress")) || 0;
         bar.style.width = Math.min(100, Math.max(0, progress)) + "%";
     });
+
+    // -------------------------------------------------------------------------
+    // 8. Geometric Canvas Particles & Live Table/Candidate Filtering
+    // -------------------------------------------------------------------------
+    initHeroParticles();
+    initTableFiltering();
 });
 
 /**
@@ -233,3 +240,165 @@ function copyToClipboard(elementId, btn) {
         document.body.removeChild(textarea);
     });
 }
+
+/**
+ * 8. Faint Geometric Particle Accents (Hero Canvas)
+ * Slowly animated nodes and connecting lines adapting opacity based on dark/light mode
+ */
+function initHeroParticles() {
+    const canvas = document.getElementById('heroParticleCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = 0;
+    let height = 0;
+
+    function resize() {
+        if (!canvas.parentElement) return;
+        width = canvas.width = canvas.parentElement.offsetWidth;
+        height = canvas.height = canvas.parentElement.offsetHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const particleCount = 28;
+    const particles = [];
+
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: Math.random() * (width || 800),
+            y: Math.random() * (height || 400),
+            vx: (Math.random() - 0.5) * 0.45,
+            vy: (Math.random() - 0.5) * 0.45,
+            radius: Math.random() * 2 + 1.2
+        });
+    }
+
+    function render() {
+        if (!width || !height) {
+            resize();
+        }
+        ctx.clearRect(0, 0, width, height);
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        const nodeColor = isDark ? 'rgba(56, 189, 248, ' : 'rgba(13, 92, 117, ';
+        const lineColor = isDark ? 'rgba(56, 189, 248, ' : 'rgba(13, 92, 117, ';
+        const baseOpacity = isDark ? 0.35 : 0.22;
+
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0) p.x = width;
+            if (p.x > width) p.x = 0;
+            if (p.y < 0) p.y = height;
+            if (p.y > height) p.y = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = nodeColor + baseOpacity + ')';
+            ctx.fill();
+
+            for (let j = i + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                const dx = p.x - p2.x;
+                const dy = p.y - p2.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 125) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    const lineOpacity = (1 - dist / 125) * (isDark ? 0.22 : 0.14);
+                    ctx.strokeStyle = lineColor + lineOpacity + ')';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+}
+
+/**
+ * 9. Real-Time Instant Search & Filtering
+ * Live filtering across Candidate Directories and Security Audit Tables
+ */
+function initTableFiltering() {
+    // A. Candidate Search Filtering
+    const candInput = document.getElementById('candidateSearchInput');
+    const candCards = document.querySelectorAll('.candidate-card-item');
+    const noCandMatches = document.getElementById('noCandidateMatches');
+
+    if (candInput && candCards.length > 0) {
+        candInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            candCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (!query || text.includes(query)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (noCandMatches) {
+                noCandMatches.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+        });
+    }
+
+    // B. Audit Log Search Filtering
+    const auditInput = document.getElementById('auditSearchInput');
+    const adminRows = document.querySelectorAll('#adminAuditTable .audit-table-row');
+    const voterRows = document.querySelectorAll('#voterAuditTable .audit-table-row');
+    const noAdminMatches = document.getElementById('noAdminAuditMatches');
+    const noVoterMatches = document.getElementById('noVoterAuditMatches');
+
+    if (auditInput) {
+        auditInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+
+            // Filter Admin Table
+            if (adminRows.length > 0) {
+                let adminVisible = 0;
+                adminRows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (!query || text.includes(query)) {
+                        row.style.display = '';
+                        adminVisible++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                if (noAdminMatches) {
+                    noAdminMatches.style.display = adminVisible === 0 ? 'block' : 'none';
+                }
+            }
+
+            // Filter Voter Table
+            if (voterRows.length > 0) {
+                let voterVisible = 0;
+                voterRows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (!query || text.includes(query)) {
+                        row.style.display = '';
+                        voterVisible++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                if (noVoterMatches) {
+                    noVoterMatches.style.display = voterVisible === 0 ? 'block' : 'none';
+                }
+            }
+        });
+    }
+}
+

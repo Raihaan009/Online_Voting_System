@@ -66,7 +66,13 @@ public class VoteBoothServlet extends HttpServlet {
         }
 
         // Verify that voter has not already voted in this election
-        boolean alreadyVoted = voteDAO.hasVoterVotedInElection(voter.getVoterId(), electionId);
+        boolean alreadyVoted = false;
+        try {
+            alreadyVoted = voteDAO.hasVoterVotedInElection(voter.getVoterId(), electionId);
+        } catch (Exception e) {
+            System.err.println("Error checking if voter voted: " + e.getMessage());
+        }
+
         if (alreadyVoted) {
             String msg = URLEncoder.encode("You have already cast your ballot in this election.", StandardCharsets.UTF_8);
             response.sendRedirect(request.getContextPath() + "/voter/dashboard?error=" + msg);
@@ -74,13 +80,27 @@ public class VoteBoothServlet extends HttpServlet {
         }
 
         // Fetch election and associated candidate choices
-        Election election = electionDAO.getElectionById(electionId);
+        Election election = null;
+        try {
+            election = electionDAO.getElectionById(electionId);
+        } catch (Exception e) {
+            System.err.println("Error fetching election (" + electionId + "): " + e.getMessage());
+        }
+
         if (election == null) {
             response.sendRedirect(request.getContextPath() + "/voter/dashboard?error=election_not_found");
             return;
         }
 
-        List<Candidate> candidates = candidateDAO.getCandidatesByElection(electionId);
+        List<Candidate> candidates = new java.util.ArrayList<>();
+        try {
+            candidates = candidateDAO.getCandidatesByElection(electionId);
+        } catch (Exception e) {
+            System.err.println("Error fetching candidates for election (" + electionId + "): " + e.getMessage());
+        }
+        if (candidates == null) {
+            candidates = new java.util.ArrayList<>();
+        }
 
         request.setAttribute("election", election);
         request.setAttribute("candidates", candidates);

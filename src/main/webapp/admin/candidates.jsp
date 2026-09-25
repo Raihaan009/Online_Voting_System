@@ -181,15 +181,18 @@
 
                 <!-- Currently Nominated Candidates -->
                 <section class="admin-results-section">
-                    <h2 class="section-title">
-                        <span>👥</span> Competing Candidates (${not empty candidates ? candidates.size() : 0})
-                    </h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                        <h2 class="section-title" style="margin-bottom: 0;">
+                            <span>👥</span> Competing Candidates (${not empty candidates ? candidates.size() : 0})
+                        </h2>
+                        <input type="text" id="candidateSearchInput" class="table-search-input" placeholder="🔍 Search candidates by name or manifesto..." style="width: 100%; max-width: 360px;">
+                    </div>
 
                     <c:choose>
                         <c:when test="${not empty candidates}">
-                            <div class="candidate-cards-grid">
+                            <div class="candidate-cards-grid" id="candidateCardsGrid">
                                 <c:forEach var="cand" items="${candidates}">
-                                    <div class="portal-card" style="position: relative;">
+                                    <div class="portal-card candidate-card-item" style="position: relative;">
                                         <div class="candidate-card-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                             <span class="candidate-symbol-badge" style="font-size: 1.3rem;">${cand.partySymbol}</span>
                                             <form action="${pageContext.request.contextPath}/admin/candidates" method="POST" 
@@ -202,18 +205,23 @@
                                             </form>
                                         </div>
 
-                                        <h3 class="candidate-name" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.25rem;">
+                                        <h3 class="candidate-name" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.25rem; color: var(--text-primary);">
                                             ${cand.name}
                                         </h3>
-                                        <div class="candidate-party" style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.85rem;">
+                                        <div class="candidate-party" style="font-size: 0.85rem; color: var(--accent-primary); font-weight: 600; margin-bottom: 0.85rem;">
                                             ${cand.partySymbol}
                                         </div>
 
-                                        <div class="candidate-manifesto" style="font-size: 0.85rem; color: var(--text-secondary); background: #f8fafc; padding: 0.85rem; border-radius: var(--radius-sm); border-left: 3px solid var(--primary); margin-top: auto;">
-                                            <strong>Manifesto:</strong> ${cand.manifesto}
+                                        <div class="candidate-manifesto" style="font-size: 0.85rem; color: var(--text-muted); background: var(--accent-light); padding: 0.85rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent-primary); margin-top: auto;">
+                                            <strong style="color: var(--text-primary);">Manifesto:</strong> ${cand.manifesto}
                                         </div>
                                     </div>
                                 </c:forEach>
+                            </div>
+                            <div id="noCandidateMatches" class="filter-empty-state" style="display: none; padding: 2.5rem; text-align: center; background: var(--surface-card); border: 1px dashed var(--border-color); border-radius: var(--radius-md); margin-top: 1rem;">
+                                <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🔍</span>
+                                <h4 style="color: var(--text-primary); margin-bottom: 0.25rem;">No Matching Candidates</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">No candidates match your search query. Try typing another name or keyword.</p>
                             </div>
                         </c:when>
                         <c:otherwise>

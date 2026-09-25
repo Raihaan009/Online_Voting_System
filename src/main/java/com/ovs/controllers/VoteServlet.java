@@ -110,8 +110,9 @@ public class VoteServlet extends HttpServlet {
             // Redirect following Post/Redirect/Get (PRG) pattern to prevent duplicate form submissions
             response.sendRedirect(request.getContextPath() + "/voter/vote-confirmation.jsp");
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Voting failed for voter " + voter.getVoterId() + ": " + e.getMessage());
+            e.printStackTrace();
 
             String userMsg;
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("duplicate vote")) {

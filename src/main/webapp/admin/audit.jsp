@@ -86,7 +86,8 @@
                 </button>
             </div>
 
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="auditSearchInput" class="table-search-input" placeholder="🔍 Search action, IP, email, metadata..." style="width: 280px;">
                 <form action="${pageContext.request.contextPath}/admin/audit" method="GET" style="display: flex; gap: 0.5rem; align-items: center;">
                     <label for="limitSelect" class="form-label" style="margin-bottom: 0; font-size: 0.85rem;">Display Limit:</label>
                     <select id="limitSelect" name="limit" class="form-control" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
@@ -115,7 +116,7 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="tally-table">
+                    <table class="tally-table" id="adminAuditTable">
                         <thead>
                             <tr>
                                 <th style="width: 70px;">ID</th>
@@ -130,7 +131,7 @@
                             <c:choose>
                                 <c:when test="${not empty adminLogs}">
                                     <c:forEach var="log" items="${adminLogs}">
-                                        <tr>
+                                        <tr class="audit-table-row">
                                             <td>
                                                 <span class="rank-col">#${log.logId}</span>
                                             </td>
@@ -163,11 +164,11 @@
                                                 </c:choose>
                                             </td>
                                             <td>
-                                                <code style="background: var(--secondary-light); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: var(--primary); border: 1px solid var(--border);">
+                                                <code style="background: var(--accent-light); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: var(--accent-primary); border: 1px solid var(--border-color);">
                                                     ${log.ipAddress}
                                                 </code>
                                             </td>
-                                            <td style="font-size: 0.85rem; color: var(--text-secondary);">
+                                            <td style="font-size: 0.85rem; color: var(--text-muted);">
                                                 <c:out value="${log.details}" />
                                             </td>
                                         </tr>
@@ -188,6 +189,11 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="noAdminAuditMatches" class="filter-empty-state" style="display: none; padding: 2rem; text-align: center;">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🔍</span>
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.25rem;">No Matching Administrative Logs</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">No administrative operations match your search query.</p>
+                </div>
             </div>
         </section>
 
@@ -204,7 +210,7 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="tally-table">
+                    <table class="tally-table" id="voterAuditTable">
                         <thead>
                             <tr>
                                 <th style="width: 70px;">ID</th>
@@ -219,7 +225,7 @@
                             <c:choose>
                                 <c:when test="${not empty voterLogs}">
                                     <c:forEach var="vlog" items="${voterLogs}">
-                                        <tr>
+                                        <tr class="audit-table-row">
                                             <td>
                                                 <span class="rank-col">#${vlog.logId}</span>
                                             </td>
@@ -243,11 +249,11 @@
                                                 </c:choose>
                                             </td>
                                             <td>
-                                                <code style="background: var(--secondary-light); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: var(--primary); border: 1px solid var(--border);">
+                                                <code style="background: var(--accent-light); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem; color: var(--accent-primary); border: 1px solid var(--border-color);">
                                                     ${vlog.ipAddress}
                                                 </code>
                                             </td>
-                                            <td style="font-size: 0.85rem; color: var(--text-secondary);">
+                                            <td style="font-size: 0.85rem; color: var(--text-muted);">
                                                 <c:out value="${vlog.details}" />
                                             </td>
                                         </tr>
@@ -267,6 +273,11 @@
                             </c:choose>
                         </tbody>
                     </table>
+                </div>
+                <div id="noVoterAuditMatches" class="filter-empty-state" style="display: none; padding: 2rem; text-align: center;">
+                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🔍</span>
+                    <h4 style="color: var(--text-primary); margin-bottom: 0.25rem;">No Matching Voter Authentication Logs</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">No voter authentication events match your search query.</p>
                 </div>
             </div>
         </section>

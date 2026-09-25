@@ -59,6 +59,16 @@
                         </button>
                     </div>
 
+                    <!-- Verifiable QR Code Container (High-Contrast for Camera Scanning) -->
+                    <div class="qr-code-wrapper">
+                        <div class="qr-code-card">
+                            <div id="qrcodeCanvas"></div>
+                        </div>
+                        <p class="qr-code-hint">
+                            📷 Scan with any mobile camera to instantly verify ballot registration on the public ledger.
+                        </p>
+                    </div>
+
                     <div class="receipt-meta-grid">
                         <div class="receipt-meta-item">
                             <span class="meta-name">Voter Account</span>
@@ -96,12 +106,30 @@
     <!-- Include Footer -->
     <jsp:include page="/WEB-INF/views/common/footer.jsp" />
 
+    <!-- QR Code Generator Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const timeEl = document.getElementById("confirmation-time");
+            var timeEl = document.getElementById("confirmation-time");
             if (timeEl) {
-                const now = new Date();
+                var now = new Date();
                 timeEl.textContent = now.toLocaleDateString() + " " + now.toLocaleTimeString();
+            }
+
+            var tokenEl = document.getElementById("receiptTokenCode");
+            var qrContainer = document.getElementById("qrcodeCanvas");
+            if (tokenEl && qrContainer && typeof QRCode !== 'undefined') {
+                var token = tokenEl.textContent.trim();
+                var verifyUrl = window.location.origin + "${pageContext.request.contextPath}/verify-receipt?receiptToken=" + encodeURIComponent(token);
+                new QRCode(qrContainer, {
+                    text: verifyUrl,
+                    width: 140,
+                    height: 140,
+                    colorDark : "#0F172A",
+                    colorLight : "#FFFFFF",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
             }
         });
     </script>

@@ -16,6 +16,7 @@ public class Voter implements Serializable {
     private String passwordHash;
     private boolean hasVoted;
     private String status;
+    private String department = "Computer Science";
     private Timestamp createdAt;
 
     /**
@@ -110,6 +111,14 @@ public class Voter implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getDepartment() {
+        return department != null ? department : "Computer Science";
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
     }
 
     public Timestamp getCreatedAt() {

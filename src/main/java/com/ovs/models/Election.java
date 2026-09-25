@@ -105,6 +105,19 @@ public class Election implements Serializable {
         this.endDate = endDate;
     }
 
+    /**
+     * Helper getter returning epoch milliseconds for client-side JavaScript countdown timers.
+     * Prevents JSP EL PropertyNotFoundException on LocalDateTime.
+     *
+     * @return epoch timestamp in milliseconds, or 0 if endDate is null
+     */
+    public long getEndTimeMillis() {
+        if (endDate != null) {
+            return endDate.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        }
+        return 0L;
+    }
+
     public String getStatus() {
         return status;
     }

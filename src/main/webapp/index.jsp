@@ -19,14 +19,30 @@
 
         <!-- Hero Section -->
         <section class="hero-banner">
-            <div class="hero-badge">CampusVote &bull; Online Voting System</div>
-            <h1 class="hero-headline">
-                Secure, Transparent & <span class="gradient-text">Verifiable Elections</span>
-            </h1>
-            <p class="hero-lead">
-                An enterprise 3-tier electronic voting platform designed for university student councils, academic senates, and institutional governance. 
-                Guarantees democratic ballot secrecy, eliminates double-voting, and issues cryptographic audit receipts.
-            </p>
+            <canvas id="heroParticleCanvas"></canvas>
+            <div class="hero-content-wrap">
+                <div style="display: inline-flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; background: var(--surface-card); padding: 0.4rem 1rem; border-radius: 9999px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                    <svg class="brand-emblem-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                        <path d="M3 9L12 3L21 9V10H3V9Z" fill="currentColor" fill-opacity="0.15"/>
+                        <path d="M3 10H21"/>
+                        <path d="M6 10V17"/>
+                        <path d="M10 10V17"/>
+                        <path d="M14 10V17"/>
+                        <path d="M18 10V17"/>
+                        <path d="M2 17H22V20H2V17Z"/>
+                        <path d="M9 13.5L11 15.5L15 11.5" stroke="currentColor" stroke-width="2.2"/>
+                    </svg>
+                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">CampusVote</span>
+                    <span style="font-size: 0.68rem; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase;">ONLINE VOTING SYSTEM</span>
+                </div>
+
+                <h1 class="hero-headline">
+                    Secure, Transparent & <span class="gradient-text">Verifiable Elections</span>
+                </h1>
+                <p class="hero-lead">
+                    An enterprise 3-tier electronic voting platform designed for university student councils, academic senates, and institutional governance. 
+                    Guarantees democratic ballot secrecy, eliminates double-voting, and issues cryptographic audit receipts.
+                </p>
             <div class="hero-actions">
                 <c:choose>
                     <c:when test="${not empty sessionScope.currentUser}">
@@ -51,6 +67,7 @@
                         </a>
                     </c:otherwise>
                 </c:choose>
+            </div>
             </div>
         </section>
 

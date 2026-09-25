@@ -1,9 +1,16 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 
-<%-- If election attribute is missing, redirect through VoteBoothServlet to load data --%>
-<c:if test="${empty election && not empty param.electionId}">
-    <c:redirect url="/voter/vote?electionId=${param.electionId}" />
+<%-- Defensive redirect if election attribute is missing --%>
+<c:if test="${empty election}">
+    <c:choose>
+        <c:when test="${not empty param.electionId}">
+            <c:redirect url="/voter/vote?electionId=${param.electionId}" />
+        </c:when>
+        <c:otherwise>
+            <c:redirect url="/voter/dashboard" />
+        </c:otherwise>
+    </c:choose>
 </c:if>
 
 <!DOCTYPE html>
@@ -23,10 +30,26 @@
 
         <!-- Booth Header -->
         <div class="booth-header-card">
-            <div class="booth-badge">Official Secret Ballot</div>
-            <h1 class="booth-election-title">${election.title}</h1>
-            <p class="booth-election-desc">${election.description}</p>
-            <div class="booth-notice">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div class="booth-badge">Official Secret Ballot</div>
+                    <h1 class="booth-election-title">${election.title}</h1>
+                    <p class="booth-election-desc">${election.description}</p>
+                </div>
+                <!-- Dynamic Polling Countdown Timer -->
+                <div id="countdownContainer" data-end-time="${not empty election.endTimeMillis ? election.endTimeMillis : 0}">
+                    <span class="countdown-badge" id="pollingCountdownBadge">
+                        ⏱️ Time Remaining: <strong id="countdownTimer">Loading...</strong>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Election Closed Banner (Triggered when countdown reaches 0) -->
+            <div id="electionClosedBanner" class="election-closed-banner" style="display: none; margin-top: 1rem;">
+                <span>⚠️</span> <strong>Election Closed:</strong> The voting window for this election has ended. No further ballots may be committed.
+            </div>
+
+            <div class="booth-notice" style="margin-top: 1rem;">
                 <span class="notice-icon">🔒</span>
                 <span>
                     <strong>Secret Ballot Protected:</strong> Your selection is stored anonymously. Your identity is separated from this ballot box.
@@ -69,6 +92,12 @@
                                     <div class="candidate-party">${candidate.partySymbol}</div>
                                     <div class="candidate-manifesto">
                                         <p><strong>Manifesto:</strong> ${candidate.manifesto}</p>
+                                    </div>
+                                    <div style="margin-top: 0.85rem;">
+                                        <button type="button" class="btn btn-manifesto" 
+                                                onclick="event.stopPropagation(); event.preventDefault(); openManifestoModal('<c:out value="${candidate.name}"/>', '<c:out value="${candidate.partySymbol}"/>', '<c:out value="${candidate.manifesto}"/>')">
+                                            📖 Read Full Manifesto
+                                        </button>
                                     </div>
                                 </div>
                             </label>
@@ -127,10 +156,95 @@
             </div>
         </div>
 
+        <!-- Candidate Manifesto Modal Dialog (Dual-Theme Styled) -->
+        <div id="manifestoModal" class="manifesto-modal-overlay" style="display: none;">
+            <div class="manifesto-modal-card" role="dialog" aria-modal="true" aria-labelledby="manifestoCandidateTitle">
+                <div class="manifesto-modal-header">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span id="manifestoSymbolBadge" style="font-size: 1.8rem;">🎓</span>
+                        <div>
+                            <h3 id="manifestoCandidateTitle" style="font-size: 1.35rem; font-weight: 800; margin: 0; color: var(--text-primary);">Candidate Agenda</h3>
+                            <span style="font-size: 0.8rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase;">Official Policy Statement</span>
+                        </div>
+                    </div>
+                    <button type="button" class="manifesto-modal-close" onclick="closeManifestoModal()" aria-label="Close manifesto">&times;</button>
+                </div>
+                <div class="manifesto-modal-body" style="line-height: 1.7; font-size: 0.95rem; color: var(--text-primary);">
+                    <p id="manifestoBodyText" style="white-space: pre-wrap; margin: 0;"></p>
+                </div>
+                <div style="margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline-secondary" onclick="closeManifestoModal()">Close Manifesto</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Include Footer -->
     <jsp:include page="/WEB-INF/views/common/footer.jsp" />
 
+    <script>
+    function openManifestoModal(name, symbol, manifesto) {
+        document.getElementById('manifestoCandidateTitle').textContent = name + " - Manifesto";
+        document.getElementById('manifestoSymbolBadge').textContent = symbol || '🗳️';
+        document.getElementById('manifestoBodyText').textContent = manifesto || "No manifesto statement submitted by candidate.";
+        document.getElementById('manifestoModal').style.display = 'flex';
+    }
+
+    function closeManifestoModal() {
+        document.getElementById('manifestoModal').style.display = 'none';
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var mModal = document.getElementById('manifestoModal');
+        if (mModal) {
+            mModal.addEventListener('click', function(e) {
+                if (e.target === mModal) closeManifestoModal();
+            });
+        }
+
+        // Real-Time Dynamic Polling Countdown
+        var countdownContainer = document.getElementById("countdownContainer");
+        var timerEl = document.getElementById("countdownTimer");
+        var badgeEl = document.getElementById("pollingCountdownBadge");
+        var closedBanner = document.getElementById("electionClosedBanner");
+        var openConfirmBtn = document.getElementById("openConfirmModalBtn");
+
+        if (countdownContainer && timerEl) {
+            var rawEndTime = parseInt(countdownContainer.getAttribute("data-end-time"), 10);
+            var endTime = (rawEndTime && !isNaN(rawEndTime) && rawEndTime > 0) ? rawEndTime : (Date.now() + 7200000);
+
+            function updateCountdown() {
+                var now = Date.now();
+                var remaining = endTime - now;
+
+                if (remaining <= 0) {
+                    timerEl.textContent = "00:00:00 (POLLS CLOSED)";
+                    if (badgeEl) badgeEl.classList.add("expired");
+                    if (closedBanner) closedBanner.style.display = "flex";
+                    if (openConfirmBtn) {
+                        openConfirmBtn.disabled = true;
+                        openConfirmBtn.textContent = "Polling Concluded";
+                        openConfirmBtn.style.opacity = "0.6";
+                    }
+                    return;
+                }
+
+                var hours = Math.floor(remaining / (1000 * 60 * 60));
+                var minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+                var hh = (hours < 10 ? "0" : "") + hours;
+                var mm = (minutes < 10 ? "0" : "") + minutes;
+                var ss = (seconds < 10 ? "0" : "") + seconds;
+
+                timerEl.textContent = hh + ":" + mm + ":" + ss;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+    });
+    </script>
 </body>
 </html>

@@ -13,6 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tabulation & Audit - CampusVote | Online Voting System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="admin-page">
 
@@ -91,7 +92,15 @@
                         <div class="metric-icon-wrap icon-emerald">📊</div>
                         <div class="metric-data">
                             <span class="metric-num">
-                                <c:out value="${String.format('%.1f', analytics.turnoutPercentage)}" />%
+                                <c:choose>
+                                    <c:when test="${not empty analytics.turnoutFormatted}">
+                                        <c:out value="${analytics.turnoutFormatted}" />%
+                                    </c:when>
+                                    <c:when test="${not empty analytics.turnoutPercentage}">
+                                        <c:out value="${analytics.turnoutPercentage}" />%
+                                    </c:when>
+                                    <c:otherwise>0.0%</c:otherwise>
+                                </c:choose>
                             </span>
                             <span class="metric-title">Voter Turnout</span>
                         </div>
@@ -104,6 +113,45 @@
                                 <c:out value="${analytics.leadingCandidate}" />
                             </span>
                             <span class="metric-title">Current Leader</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Live Analytics & Dual-Theme Interactive Charts -->
+                <section class="admin-results-section" style="margin-bottom: 2.5rem;">
+                    <div class="analytics-charts-grid">
+                        <!-- Chart 1: Candidate Vote Share Donut / Bar Chart -->
+                        <div class="chart-card">
+                            <div class="chart-card-header">
+                                <h3 class="chart-card-title">🗳️ Candidate Vote Shares</h3>
+                                <span class="badge badge-success" style="font-size: 0.75rem;">Live Tabulation</span>
+                            </div>
+                            <!-- Skeleton loader while initializing -->
+                            <div id="chartSkeleton1" class="chart-canvas-container" style="display: flex; flex-direction: column; gap: 0.75rem; justify-content: center; align-items: center;">
+                                <div class="skeleton-circle" style="width: 140px; height: 140px;"></div>
+                                <div class="skeleton-text" style="width: 60%;"></div>
+                            </div>
+                            <div class="chart-canvas-container" id="chartWrapper1" style="display: none;">
+                                <canvas id="candidateShareChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Turnout by Academic Department Breakdown -->
+                        <div class="chart-card">
+                            <div class="chart-card-header">
+                                <h3 class="chart-card-title">🏛️ Turnout by Department</h3>
+                                <span class="badge badge-purple" style="font-size: 0.75rem;">Demographic Audit</span>
+                            </div>
+                            <!-- Skeleton loader while initializing -->
+                            <div id="chartSkeleton2" class="chart-canvas-container" style="display: flex; flex-direction: column; gap: 1rem; justify-content: center;">
+                                <div class="skeleton-text" style="height: 24px; width: 90%;"></div>
+                                <div class="skeleton-text" style="height: 24px; width: 75%;"></div>
+                                <div class="skeleton-text" style="height: 24px; width: 60%;"></div>
+                                <div class="skeleton-text" style="height: 24px; width: 45%;"></div>
+                            </div>
+                            <div class="chart-canvas-container" id="chartWrapper2" style="display: none;">
+                                <canvas id="departmentTurnoutChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -176,7 +224,15 @@
                                                             <div class="progress-bar-fill" data-progress="${cand.voteShare}"></div>
                                                         </div>
                                                         <span class="percentage-label">
-                                                            <c:out value="${String.format('%.1f', cand.voteShare)}" />%
+                                                            <c:choose>
+                                                                <c:when test="${not empty cand.voteShareFormatted}">
+                                                                    <c:out value="${cand.voteShareFormatted}" />%
+                                                                </c:when>
+                                                                <c:when test="${not empty cand.voteShare}">
+                                                                    <c:out value="${cand.voteShare}" />%
+                                                                </c:when>
+                                                                <c:otherwise>0.0%</c:otherwise>
+                                                            </c:choose>
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -395,6 +451,154 @@
             if (!str) return "";
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
+
+        // =========================================================================
+        // Chart.js Dual-Theme Integration & Dynamic Color Hook
+        // =========================================================================
+        var candChart = null;
+        var deptChart = null;
+
+        function getChartTheme(isDark) {
+            return {
+                textColor: isDark ? '#F8FAFC' : '#19212A',
+                mutedColor: isDark ? '#94A3B8' : '#5E6D7E',
+                gridColor: isDark ? '#334155' : '#DDE2E5',
+                cardBg: isDark ? '#1E293B' : '#FFFFFF',
+                palette: ['#0D5C75', '#38BDF8', '#059669', '#D97706', '#7C3AED', '#E11D48', '#2563EB', '#10B981']
+            };
+        }
+
+        function initOrUpdateCharts() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            var theme = getChartTheme(isDark);
+
+            var candLabels = ${not empty candLabelsJson ? candLabelsJson : '[]'};
+            var candVotes = ${not empty candVotesJson ? candVotesJson : '[]'};
+            var deptLabels = ${not empty deptLabelsJson ? deptLabelsJson : '[]'};
+            var deptCounts = ${not empty deptCountsJson ? deptCountsJson : '[]'};
+
+            // Swap skeleton loaders with active chart canvas
+            var sk1 = document.getElementById('chartSkeleton1');
+            var cw1 = document.getElementById('chartWrapper1');
+            if (sk1 && cw1) { sk1.style.display = 'none'; cw1.style.display = 'block'; }
+
+            var sk2 = document.getElementById('chartSkeleton2');
+            var cw2 = document.getElementById('chartWrapper2');
+            if (sk2 && cw2) { sk2.style.display = 'none'; cw2.style.display = 'block'; }
+
+            // 1. Candidate Vote Share Donut Chart
+            var ctx1 = document.getElementById('candidateShareChart');
+            if (ctx1 && typeof Chart !== 'undefined') {
+                var hasVotes = candVotes && candVotes.length > 0 && candVotes.some(function(v) { return v > 0; });
+                var displayLabels = (candLabels && candLabels.length > 0) ? candLabels : ['No Nominees Yet'];
+                var displayVotes = (candVotes && candVotes.length > 0) ? candVotes : [1];
+                if (!hasVotes && (!candVotes || candVotes.length === 0)) {
+                    displayLabels = ['No Votes Cast Yet'];
+                    displayVotes = [1];
+                }
+
+                if (candChart) {
+                    candChart.options.plugins.legend.labels.color = theme.textColor;
+                    candChart.options.plugins.tooltip.backgroundColor = isDark ? '#0F172A' : '#19212A';
+                    candChart.options.plugins.tooltip.borderColor = theme.gridColor;
+                    candChart.data.datasets[0].borderColor = theme.cardBg;
+                    candChart.data.labels = displayLabels;
+                    candChart.data.datasets[0].data = displayVotes;
+                    candChart.update();
+                } else {
+                    candChart = new Chart(ctx1.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: displayLabels,
+                            datasets: [{
+                                data: displayVotes,
+                                backgroundColor: theme.palette,
+                                borderColor: theme.cardBg,
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: theme.textColor, font: { family: "'Inter', sans-serif", weight: '600', size: 12 } }
+                                },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#0F172A' : '#19212A',
+                                    titleColor: '#F8FAFC',
+                                    bodyColor: '#F8FAFC',
+                                    borderColor: theme.gridColor,
+                                    borderWidth: 1
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 2. Turnout by Academic Department Horizontal Bar Chart
+            var ctx2 = document.getElementById('departmentTurnoutChart');
+            if (ctx2 && typeof Chart !== 'undefined') {
+                var dLabels = (deptLabels && deptLabels.length > 0) ? deptLabels : ['Computer Science', 'Mechanical', 'Business', 'Electrical'];
+                var dCounts = (deptCounts && deptCounts.length > 0) ? deptCounts : [0, 0, 0, 0];
+
+                if (deptChart) {
+                    deptChart.options.scales.x.ticks.color = theme.mutedColor;
+                    deptChart.options.scales.x.grid.color = theme.gridColor;
+                    deptChart.options.scales.y.ticks.color = theme.textColor;
+                    deptChart.options.plugins.tooltip.backgroundColor = isDark ? '#0F172A' : '#19212A';
+                    deptChart.options.plugins.tooltip.borderColor = theme.gridColor;
+                    deptChart.data.datasets[0].backgroundColor = isDark ? '#38BDF8' : '#0D5C75';
+                    deptChart.data.labels = dLabels;
+                    deptChart.data.datasets[0].data = dCounts;
+                    deptChart.update();
+                } else {
+                    deptChart = new Chart(ctx2.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: dLabels,
+                            datasets: [{
+                                label: 'Turnout (Ballots Cast)',
+                                data: dCounts,
+                                backgroundColor: isDark ? '#38BDF8' : '#0D5C75',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: { color: theme.mutedColor, stepSize: 1, precision: 0 },
+                                    grid: { color: theme.gridColor }
+                                },
+                                y: {
+                                    ticks: { color: theme.textColor, font: { weight: '600' } },
+                                    grid: { display: false }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#0F172A' : '#19212A',
+                                    titleColor: '#F8FAFC',
+                                    bodyColor: '#F8FAFC',
+                                    borderColor: theme.gridColor,
+                                    borderWidth: 1
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        setTimeout(initOrUpdateCharts, 200);
+        window.addEventListener('campusvote:themechange', initOrUpdateCharts);
     });
     </script>
 

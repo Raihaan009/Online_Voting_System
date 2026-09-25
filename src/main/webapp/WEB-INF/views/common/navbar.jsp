@@ -16,7 +16,18 @@
     <div class="nav-container">
         <!-- Brand Logo & Title (Brand Hierarchy Refinement) -->
         <a href="${pageContext.request.contextPath}/" class="logo-brand">
-            <div class="logo-badge">V</div>
+            <div class="logo-badge" aria-label="CampusVote Emblem">
+                <svg class="brand-emblem-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9L12 3L21 9V10H3V9Z" fill="currentColor" fill-opacity="0.15"/>
+                    <path d="M3 10H21"/>
+                    <path d="M6 10V17"/>
+                    <path d="M10 10V17"/>
+                    <path d="M14 10V17"/>
+                    <path d="M18 10V17"/>
+                    <path d="M2 17H22V20H2V17Z"/>
+                    <path d="M9 13.5L11 15.5L15 11.5" stroke="currentColor" stroke-width="2.2"/>
+                </svg>
+            </div>
             <div class="logo-text">
                 <span class="logo-title">CampusVote</span>
                 <span class="logo-sub brand-secondary-text">ONLINE VOTING SYSTEM</span>
