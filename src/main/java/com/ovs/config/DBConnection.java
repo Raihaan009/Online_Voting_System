@@ -10,9 +10,13 @@ import java.sql.SQLException;
  */
 public class DBConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/online_voting_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+    private static final String HOST = System.getenv("DB_HOST") != null ? System.getenv("DB_HOST") : "localhost";
+    private static final String PORT = System.getenv("DB_PORT") != null ? System.getenv("DB_PORT") : "3306";
+    private static final String DB_NAME = System.getenv("DB_NAME") != null ? System.getenv("DB_NAME") : "online_voting_db";
     private static final String USER = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : "root";
     private static final String PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "Raihaanarif1@";
+
+    private static final String URL = "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB_NAME + "?useSSL=true&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 
     private static volatile DBConnection instance;
     private Connection connection;
@@ -83,6 +87,26 @@ public class DBConnection {
         }
     }
 
+    public static String getUrl() {
+        return URL;
+    }
+
+    public static String getHost() {
+        return HOST;
+    }
+
+    public static String getPort() {
+        return PORT;
+    }
+
+    public static String getDbName() {
+        return DB_NAME;
+    }
+
+    public static String getUser() {
+        return USER;
+    }
+
     /**
      * Test utility main method to verify MySQL connectivity directly from IDE/CLI.
      *
@@ -92,8 +116,11 @@ public class DBConnection {
         System.out.println("=================================================");
         System.out.println(" Online Voting System - DB Connection Test");
         System.out.println("=================================================");
-        System.out.println("JDBC URL: " + URL);
+        System.out.println("DB Host : " + HOST);
+        System.out.println("DB Port : " + PORT);
+        System.out.println("DB Name : " + DB_NAME);
         System.out.println("DB User : " + USER);
+        System.out.println("JDBC URL: " + URL);
 
         try (Connection conn = getConnection()) {
             if (conn != null && !conn.isClosed()) {
@@ -108,9 +135,9 @@ public class DBConnection {
             System.err.println("Error Code: " + e.getErrorCode());
             System.err.println("Message   : " + e.getMessage());
             System.err.println("\nTroubleshooting Tips:");
-            System.err.println(" 1. Ensure MySQL Server is running on port 3306.");
-            System.err.println(" 2. Execute 'sql/schema.sql' to create the 'online_voting_db' database.");
-            System.err.println(" 3. Verify user credentials (default 'root' with empty password or set DB_PASSWORD env var).");
+            System.err.println(" 1. Ensure MySQL Server is running on " + HOST + ":" + PORT + ".");
+            System.err.println(" 2. Execute 'sql/schema.sql' to create the '" + DB_NAME + "' database.");
+            System.err.println(" 3. Verify user credentials (configured user: '" + USER + "') or set DB_PASSWORD env var.");
         }
     }
 }
